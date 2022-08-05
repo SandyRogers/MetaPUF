@@ -67,7 +67,12 @@ def main():  # noqa: C901
     parser.add_argument(
         "-m","--metadata",
         type=str, required=True,
-        help="full path of the sample-assembly mapping file (.tsv) with filename."
+        help="full path of the sample-assembly mapping file (.csv) with filename."
+    )
+    parser.add_argument(
+        "-b","--db_size",
+        type=int,
+        help="input the maximum size of the protein search database in bytes", default=1073741824
     )
 
     starttime = time.time()
@@ -75,23 +80,22 @@ def main():  # noqa: C901
     sample_assembly_map = defaultdict(list)
     os.chdir(args.input_dir)
     fd.check_study_accession(args.study)
-    samples = args.metadata
-    with open(samples, "r") as f:
-        headers = (f.readline()).strip().split("\t")
-        sample_index = headers.index("sample_alias")
-        analysis_index = headers.index("analysis_accession")
-        for line in f:
-            str1 = line.strip().split("\t")
-            sample_assembly_map[str1[sample_index]].append(str1[analysis_index])
+    samples = pd.read_csv(args.metadata, sep=',')
+    for idx,row in samples.iterrows():
+        sample_assembly_map[row['Sample Accession']].append(row['Assembly'])
+    
+    print(sample_assembly_map)
     #getting the sequnece data and predicted cds
     cmd_get_data = "  ".join(["mg-toolkit -d bulk_download -a",  args.study, "-p ", args.ver,  "-g sequence_data"])
-    print(cmd_get_data)
+    
     subprocess.call(cmd_get_data, shell=True)
     assembly_folder = os.path.join(args.input_dir, "assemblies")
     if not os.path.isdir(assembly_folder):
         subprocess.Popen(" ".join(["mkdir ", assembly_folder]), shell=True)
+    
     os.makedirs(assembly_folder, exist_ok=True)
     sequence_dir=args.input_dir+"/"+args.study+"/5.0/sequence_data"
+    
     for k, v in sample_assembly_map.items():
         sample_file = os.path.join(assembly_folder, k + ".fasta.gz")
         print(sample_file)
@@ -133,7 +137,7 @@ def main():  # noqa: C901
         subprocess.Popen(" ".join(["mkdir ", database_folder]), shell=True)
     os.makedirs(database_folder, exist_ok=True)
     # returns a dictionary with the group number and assemblies in the group
-    samples_in_cluster = gc.generate_clusters(data, proteins_info,args.study, database_folder, sample_assembly_map)
+    samples_in_cluster = gc.generate_clusters(data, args.db_size, proteins_info,args.study, database_folder, sample_assembly_map)
     logging.info(f"Samples in the cluster: f{samples_in_cluster}")
     fd.build_db(args.study, database_folder,assembly_folder, samples_in_cluster)
     for file in os.listdir(database_folder):
