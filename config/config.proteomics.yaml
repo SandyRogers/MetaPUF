@@ -1,8 +1,9 @@
 raws:
-    Study: "ERP133749"
-    Proteins: "SRP273822"
-    Pride_id: "PXD020692"
+    Study: "ERP124921"
+    Proteins: "ERP021080"
+    Pride_id: "PXD005780"
     Version: "5.0"
+    Db_size: 1073741824
     ThermoFold: "UWPRQE_16"
     ThermoRaw: ["2018_March_5_UWPRQE_HatchMicro_16.raw"]
 sample: "sample"
