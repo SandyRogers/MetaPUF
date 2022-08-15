@@ -8,6 +8,7 @@ raws:
     ThermoRaw: ["2018_March_5_UWPRQE_HatchMicro_16.raw"]
 sample: "sample"
 outputdir: "./"
+workdir: "./"
 tmp_dir: "tmp"
 thermo:
     url: "https://github.com/compomics/ThermoRawFileParser/releases/download/{version}/ThermoRawFileParser.zip"
