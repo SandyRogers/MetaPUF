@@ -111,7 +111,8 @@ def count_proteins(sample_assembly_dict: dict, seq_dir: str):
         protein_counts[sample]=total_count
     return protein_counts
 
-def build_db(study: str, db_dir:str,assembly_dir: str, cluster_dict: dict):
+def build_db(study: str, db_dir:str,assembly_dir: str,sample_info: str, cluster_dict: dict):
+    sample_info['Db_name']=""
     for group_no, assembly_list in cluster_dict.items():
         total_count=0
         db_name = study + "_cluster_set_" + str(group_no) + ".faa"
@@ -120,6 +121,7 @@ def build_db(study: str, db_dir:str,assembly_dir: str, cluster_dict: dict):
             for assembly in assembly_list:
                 with gzip.open(os.path.join(assembly_dir,assembly+".faa.gz"), "rt") as infile:
                     shutil.copyfileobj(infile, fasta_out)
+
         db_size = "The estimated size of database is " + str(
             stat(database_file).st_size
         )
@@ -127,6 +129,15 @@ def build_db(study: str, db_dir:str,assembly_dir: str, cluster_dict: dict):
         with open(cluster_report, "a", encoding="utf-8") as fin:
             fin.write("\n")
             fin.write(db_size + "\n")
+    
+    #Writing database information in sample_info file
+    for group_no, assembly_list in cluster_dict.items():
+        for assembly in assembly_list:
+            for i in range(len(sample_info)):
+                if assembly==sample_info['Assembly'][i]:
+                    sample_info['Db_name'][i]=study + "_cluster_set_" + str(group_no) + ".faa"
+    sample_info.to_csv(os.path.join(assembly_dir, "sample_info_final.csv"))
+
 
 def uniq_proteins(d_dir: str, db_name: str):
     """

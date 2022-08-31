@@ -20,7 +20,7 @@ ENVDIR      = srcdir("workflow/envs")
 CONFIGDIR   = srcdir("config")
 OUTPUTDIR   = os.environ.get("OUTPUTDIR", config['outputdir'])
 TMPDIR      = os.environ.get("TMPDIR", config['tmp_dir'])
-CONTIG_INFO_FILE = os.path.join(OUTPUTDIR,"assemblies")
+CONTIG_INFO_FILE_DIR = os.path.join(OUTPUTDIR,"assemblies")
 PROCESSED_REPORTS_DIR = os.path.join(OUTPUTDIR,"Processed_Peptide_Reports")
 
 ##################################################
@@ -30,12 +30,14 @@ workdir:
     OUTPUTDIR
 
 SAMPLEINFO_FILE = os.path.join(CONFIGDIR, "sample_info.csv")
+SAMPLEINFO_FILE_FINAL = os.path.join(CONTIG_INFO_FILE_DIR, "sample_info_final.csv")
+sample_info_final=pd.read_csv(SAMPLEINFO_FILE_FINAL, sep=',')
 sample_info     = pd.read_csv(SAMPLEINFO_FILE, sep=',')
 Samples         = sample_info['Sample'].to_list()
 sample_info['Raw file URLs'].to_csv("config/rawurls.txt", index=False, header=False)
 RawURLs         = os.path.join("","config/rawurls.txt")
-Proteins        = sample_info['Database'].to_list()
-Assemblies      =sample_info['Assembly'].to_list()
+Proteins        = sample_info_final['Db_name'].to_list()
+Assemblies      =sample_info_final['Assembly'].to_list()
 
 #input files
 STUDY = os.environ.get("STUDY", config["raws"]["Study"])
@@ -112,7 +114,6 @@ rule generate_db:
         script=PYTHON_SPT1,
         sample_metadata=SAMPLEINFO_FILE
     output:
-        db_file=DATABASE_FILE,
         contigs_dir=OUTPUT_FILE,
         protein_file=PROTEIN_FILE
     params:
@@ -284,7 +285,7 @@ rule gff_format_file:
         script=PYTHON_SPT2,
         metap_sample_info=SAMPLEINFO_FILE,
         reports_dir=PROCESSED_REPORTS_DIR,
-        metag_dir=CONTIG_INFO_FILE,
+        metag_dir=CONTIG_INFO_FILE_DIR,
     output:
         GFF_FILE
     params:
