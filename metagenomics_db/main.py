@@ -139,7 +139,7 @@ def main():  # noqa: C901
     # returns a dictionary with the group number and assemblies in the group
     samples_in_cluster = gc.generate_clusters(data, args.db_size, proteins_info,args.study, database_folder, sample_assembly_map)
     logging.info(f"Samples in the cluster: f{samples_in_cluster}")
-    fd.build_db(args.study, database_folder,assembly_folder, samples_in_cluster)
+    fd.build_db(args.study, database_folder,assembly_folder,samples,  samples_in_cluster)
     for file in os.listdir(database_folder):
         if file.endswith(".faa") and not file.startswith("unique"):
             protein_file=os.path.join(database_folder, file)

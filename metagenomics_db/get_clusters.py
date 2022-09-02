@@ -89,7 +89,7 @@ def generate_clusters(  # noqa: C901
                     for val in sample_assembly_info[item]:
                         temp_list.append(val)
             cluster_assemblies[k] = temp_list
-        study_info = ("cluster_report for " + str(study_name)).center(40)
+        study_info = ("cluster_report for " + str(study_name)).center(80)
         database_info = "No of databases:" + str(group_no - 1)
         with open(cluster_report, "w") as fin:
             fin.write(study_info + "\n")
