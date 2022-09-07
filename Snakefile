@@ -22,8 +22,6 @@ RESOURCEDIR = srcdir("resources")
 WORKDIR     = os.environ.get("WORKDIR", config['workdir'])
 OUTPUTDIR   = os.environ.get("OUTPUTDIR", config['outputdir'])
 TMPDIR      = os.environ.get("TMPDIR", config['tmp_dir'])
-CONTIG_INFO_FILE = os.path.join(OUTPUTDIR, "assemblies")
-PROCESSED_REPORTS_DIR = os.path.join(OUTPUTDIR, "Processed_Peptide_Reports")
 
 # parameters
 FIRST_NAME  = os.environ.get("FIRST_NAME", config["raws"]["first_name"])
@@ -34,6 +32,8 @@ ORG_NAME    = os.environ.get("ORG_NAME", config["raws"]["org_name"])
 ORG_EMAIL   = os.environ.get("ORG_EMAIL", config["raws"]["org_email"])
 ORG_ADDRESS = os.environ.get("ORG_ADDRESS", config["raws"]["org_address"])
 THERMOFOLD  = os.environ.get("THERMOFOLD", config["raws"]["ThermoFold"])
+CONTIG_INFO_FILE_DIR = os.path.join(OUTPUTDIR,"assemblies")
+PROCESSED_REPORTS_DIR = os.path.join(OUTPUTDIR,"Processed_Peptide_Reports")
 
 ##################################################
 # WORKDIR
@@ -43,6 +43,8 @@ workdir:
 
 CONFIGDIR = 'config'
 SAMPLEINFO_FILE = os.path.join(CONFIGDIR, "sample_info.csv")
+SAMPLEINFO_FILE_FINAL = os.path.join(CONTIG_INFO_FILE_DIR, "sample_info_final.csv")
+sample_info_final=pd.read_csv(SAMPLEINFO_FILE_FINAL, sep=',')
 sample_info     = pd.read_csv(SAMPLEINFO_FILE, sep=',')
 Samples         = sample_info['Sample'].drop_duplicates().to_list()
 
@@ -56,8 +58,9 @@ RawFiles        = (sample_raw['Sample']+'/'+sample_raw['filename']).to_list()
 Proteins        = sample_info['Db_name'].drop_duplicates().to_list()
 HUMAN_FASTA = os.path.join(RESOURCEDIR, "human_db.fa")
 CRAP_FASTA = os.path.join(RESOURCEDIR, "crap_db.fa")
-Assemblies      =sample_info['Assembly'].to_list()
 I_PROTEINS = [os.path.splitext(os.path.basename(f))[0] for f in Proteins]
+Assemblies      =sample_info_final['Assembly'].to_list()
+
 #input files
 STUDY = os.environ.get("STUDY", config["raws"]["Study"])
 PRIDE_ID = os.environ.get("PRIDE_ID", config["raws"]["Pride_id"])
