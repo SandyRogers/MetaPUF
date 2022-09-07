@@ -40,7 +40,8 @@ INPUT_DIR = STUDY = os.environ.get("INPUT_DIR", config["parameters"]["Input_dir"
 PRIDE_ID = os.environ.get("PRIDE_ID", config["parameters"]["Pride_id"])
 VERSION = os.environ.get("VERSION", config["parameters"]["Version"])
 DB_SIZE = os.environ.get("DB_SIZE", config["parameters"]["Db_size"])
-METADATA = os.environ.get("METADATA", config["parameters"]["Metadata"])
+METADATA = os.environ.get("METADATA", config["raws"]["Metadata"])
+I_PROTEINS = os.environ.get("PROTEINS", config["parameters"]["Proteins"])
 SEARCHGUI_OUTPUT = os.environ.get("SEARCHGUI_OUTPUT", config["output"]["searchgui_folder"])
 PEPTIDERSHAKER_OUTPUT = os.environ.get("PEPTIDERSHAKER_OUTPUT", config["output"]["peptidershaker_folder"])
 
@@ -54,18 +55,14 @@ workdir:
 
 #input files
 SAMPLEINFO_FILE = os.path.join(CONFIGDIR, METADATA)
-sample_info_final=pd.read_csv(SAMPLEINFO_FILE_FINAL, sep=',')
 sample_info     = pd.read_csv(SAMPLEINFO_FILE, sep=',')
+Assemblies      =sample_info['Assembly'].to_list()
 Samples         = sample_info['Sample'].drop_duplicates().to_list()
 sample_raw = sample_info[['Sample','Raw file']].drop_duplicates()
 sample_raw[['filename','extension']] = sample_raw['Raw file'].str.split('.',expand=True)
 RawFiles        = (sample_raw['Sample']+'/'+sample_raw['filename']).to_list()
 CRAP_FASTA = os.path.join(RESOURCEDIR, "crap_db.fa")
 HUMAN_FASTA = os.path.join(RESOURCEDIR, "human_db.fa")
-
-#output files
-SAMPLEINFO_FILE_FINAL = os.path.join(CONTIG_INFO_FILE_DIR, "sample_info_final.csv")
-GFF_FILE = expand("PROCESSED_REPORTS_DIR/results/{aname}.gff",aname=Assemblies)
 
 # data (output from one rule being used as input for another))
 OUTPUT_FILE = expand("assemblies/{aname}_contig_info.txt", aname=Assemblies)
@@ -81,6 +78,7 @@ RPT_NAMES = [os.path.splitext(os.path.basename(f))[0] for f in Samples]
 PROTEIN_RPT = expand("results/reports/proteins/{fname}_protein_report.txt", fname=RPT_NAMES)
 PEPTIDE_RPT = expand("results/reports/peptides/{fname}_peptide_report.txt", fname=RPT_NAMES)
 PROCESSED_RPT = expand("results/reports/processed/processed_{fname}_peptide_report.txt", fname=RPT_NAMES)
+PROTEINS_DECOY = expand("proteins/{pname}_concatenated_target_decoy.fasta", pname=I_PROTEINS)
 
 # tools
 THERMO_EXE = os.path.join(BINDIR, "ThermoRawFileParser/ThermoRawFileParser.exe")
@@ -88,8 +86,9 @@ SEARCHGUI_JAR = os.path.join(BINDIR, "SearchGUI-4.0.41/SearchGUI-4.0.41.jar")
 SEARCHGUI_PAR_PARAMS = " ".join(["-%s %s" % (k, "'%s'" % v if isinstance(v, str) else str(v)) for k, v in config["searchgui"]["par"].items()])
 PEPTIDESHAKER_JAR = os.path.join(BINDIR, "PeptideShaker-2.0.33/PeptideShaker-2.0.33.jar")
 
-
-
+#output files
+SAMPLEINFO_FILE_FINAL = os.path.join(CONTIG_INFO_FILE_DIR, "sample_info_final.csv")
+GFF_FILE = expand("PROCESSED_REPORTS_DIR/results/{aname}.gff",aname=Assemblies)
 
 ##################################################
 # RULES
@@ -101,11 +100,11 @@ rule ALL:
         # database=[DATABASE_FILE, OUTPUT_FILE, PROTEIN_FILE],
         # thermo=[THERMORAW, THERMOMGF],
         # searchgui=[PROTEINS_DECOY, SEARCHGUI_PAR, SEARCHGUI_ZIP]
-        report=[PROTEIN_RPT, PEPTIDE_RPT],
-        peptideshaker=PEPTIDESHAKER_MZID
+        #report=[PROTEIN_RPT, PEPTIDE_RPT],
+        #peptideshaker=PEPTIDESHAKER_MZID
         # assembly_list=ASSEMBLY_NAMES,
         # processed=PROCESSED_RPT
-        # gff_files=GFF_FILE
+        gff_files=GFF_FILE
 
 
 
@@ -174,7 +173,7 @@ rule thermorawfileparser:
 #########################
 rule searchgui_decoy:
     input:
-        faa=DATABASE_FILE,
+        #faa=DATABASE_FILE,
         human_db=HUMAN_FASTA,
         crap_db=CRAP_FASTA,
         jar=SEARCHGUI_JAR
@@ -314,7 +313,7 @@ rule peptideshaker_load:
 #########################
 rule assembly_list:
     input:
-        info_file=METADATA_FILE
+        info_file=METADATA
     output:
         ASSEMBLY_NAMES="assembly_names.txt"
     run:
@@ -350,22 +349,22 @@ rule post_processing:
 #########################
 rule gff_format_file:
     input:
-        script=PYTHON_SPT2,
+        #script=PYTHON_SPT2,
         metap_sample_info=SAMPLEINFO_FILE_FINAL,
         reports_dir=PROCESSED_REPORTS_DIR,
-        metag_dir=CONTIG_INFO_FILE
+        metag_dir=CONTIG_INFO_FILE_DIR
     output:
         GFF_FILE
     params:
         pride_id=PRIDE_ID
     log:
-        expand("logs/{aname}_gff_generate.log", aname=ASSEMBLY_NAME)
+        expand("logs/{aname}_gff_generate.log", aname=Assemblies)
     threads: 1
     message:
         "Generating GFF format file: {input.metap_sample_info} -> {output}"
     shell:
-        "python {input.script} -s {input.metap_sample_info} -r {input.reports_dir} "
-        "-m {input.metag_dir} -p {params.pride_id} &> {log}"
+        "python gff_generation/main.py -s {input.metap_sample_info} -r {input.reports_dir} "
+        "-m {input.metag_dir} -p {params.pride_id}"
 
 
 
