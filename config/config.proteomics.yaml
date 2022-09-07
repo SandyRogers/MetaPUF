@@ -4,12 +4,22 @@ raws:
     Pride_id: "PXD005780"
     Version: "5.0"
     Db_size: 1073741824
-    ThermoFold: "UWPRQE_16"
+    ThermoFold: "input/Raw"
     ThermoRaw: ["2018_March_5_UWPRQE_HatchMicro_16.raw"]
+    first_name: "Shengbo"
+    last_name: "Wang"
+    email: "shengbo_wang@ebi.ac.uk"
+    address: "EBI"
+    org_name: "EBI"
+    org_email: "test@ebi.ac.uk"
+    org_address: "Cambridge"
 sample: "sample"
 outputdir: "./"
 workdir: "./"
 tmp_dir: "tmp"
+output:
+    searchgui_folder: "searchgui"
+    peptidershaker_folder: "peptidershaker"
 thermo:
     url: "https://github.com/compomics/ThermoRawFileParser/releases/download/{version}/ThermoRawFileParser.zip"
     exe: "ThermoRawFileParser.exe"

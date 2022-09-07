@@ -1,4 +1,0 @@
-Traceback (most recent call last):
-  File "metagenomics_db/main.py", line 20, in <module>
-    import mg_toolkit
-ModuleNotFoundError: No module named 'mg_toolkit'

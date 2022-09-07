@@ -27,7 +27,7 @@ def dir_path(string):
         raise NotADirectoryError(string)
 
 
-def main():  # noqa: C901
+def main(): 
     """
     Aggregate information from metaproteomics and metagenomics about the expressed proteins
     and generate processed peptide reports for gff file generation

@@ -1,3 +1,14 @@
-Sample,Raw file,Raw file URLs,Sample Accession,Database,Assembly
-S03,2018_March_5_UWPRQE_HatchMicro_03.raw,http://ftp.pride.ebi.ac.uk/pride/data/archive/2021/04/PXD020692/2018_March_5_UWPRQE_HatchMicro_03.raw,SRS7098389,ERZ4291133,ERZ4291133
-S04,2018_March_5_UWPRQE_HatchMicro_04.raw,http://ftp.pride.ebi.ac.uk/pride/data/archive/2021/04/PXD020692/2018_March_5_UWPRQE_HatchMicro_04.raw,SRS7098390,ERZ4290864,ERZ4290864
+Sample,PRIDE Accession,Raw file,Raw file URLs,Sample Accession,Assembly,Db_name
+S6,PXD005780,S6.raw,,ERS1509315,ERZ1669330,unique_ERP124921_cluster_set_1.faa
+S13,PXD005780,S13.raw,,ERS1509317,ERZ1669337,unique_ERP124921_cluster_set_1.faa
+S6,PXD005780,S6.raw,,ERS1509315,ERZ1669339,unique_ERP124921_cluster_set_1.faa
+S13,PXD005780,S13.raw,,ERS1509317,ERZ1669345,unique_ERP124921_cluster_set_1.faa
+S13,PXD005780,S13.raw,,ERS1509317,ERZ1669347,unique_ERP124921_cluster_set_1.faa
+S7,PXD005780,S7.raw,,ERS1509316,ERZ1669348,unique_ERP124921_cluster_set_1.faa
+S6,PXD005780,S6.raw,,ERS1509315,ERZ1669349,unique_ERP124921_cluster_set_1.faa
+S13,PXD005780,S13.raw,,ERS1509317,ERZ1669353,unique_ERP124921_cluster_set_1.faa
+S7,PXD005780,S7.raw,,ERS1509316,ERZ1669354,unique_ERP124921_cluster_set_1.faa
+S6,PXD005780,S6.raw,,ERS1509315,ERZ1669357,unique_ERP124921_cluster_set_1.faa
+S6,PXD005780,S6.raw,,ERS1509315,ERZ1669361,unique_ERP124921_cluster_set_1.faa
+S13,PXD005780,S13.raw,,ERS1509317,ERZ1669363,unique_ERP124921_cluster_set_1.faa
+S6,PXD005780,S6.raw,,ERS1509315,ERZ1669364,unique_ERP124921_cluster_set_1.faa
