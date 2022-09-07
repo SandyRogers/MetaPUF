@@ -22,18 +22,27 @@ RESOURCEDIR = srcdir("resources")
 WORKDIR     = os.environ.get("WORKDIR", config['workdir'])
 OUTPUTDIR   = os.environ.get("OUTPUTDIR", config['outputdir'])
 TMPDIR      = os.environ.get("TMPDIR", config['tmp_dir'])
-
-# parameters
-FIRST_NAME  = os.environ.get("FIRST_NAME", config["raws"]["first_name"])
-LAST_NAME   = os.environ.get("LAST_NAME", config["raws"]["last_name"])
-EMAIL       = os.environ.get("EMAIL", config["raws"]["email"])
-ADDRESS     = os.environ.get("ADDRESS", config["raws"]["address"])
-ORG_NAME    = os.environ.get("ORG_NAME", config["raws"]["org_name"])
-ORG_EMAIL   = os.environ.get("ORG_EMAIL", config["raws"]["org_email"])
-ORG_ADDRESS = os.environ.get("ORG_ADDRESS", config["raws"]["org_address"])
-THERMOFOLD  = os.environ.get("THERMOFOLD", config["raws"]["ThermoFold"])
 CONTIG_INFO_FILE_DIR = os.path.join(OUTPUTDIR,"assemblies")
 PROCESSED_REPORTS_DIR = os.path.join(OUTPUTDIR,"Processed_Peptide_Reports")
+
+
+# parameters
+FIRST_NAME  = os.environ.get("FIRST_NAME", config["parameters"]["first_name"])
+LAST_NAME   = os.environ.get("LAST_NAME", config["parameters"]["last_name"])
+EMAIL       = os.environ.get("EMAIL", config["parameters"]["email"])
+ADDRESS     = os.environ.get("ADDRESS", config["parameters"]["address"])
+ORG_NAME    = os.environ.get("ORG_NAME", config["parameters"]["org_name"])
+ORG_EMAIL   = os.environ.get("ORG_EMAIL", config["parameters"]["org_email"])
+ORG_ADDRESS = os.environ.get("ORG_ADDRESS", config["parameters"]["org_address"])
+THERMOFOLD  = os.environ.get("THERMOFOLD", config["parameters"]["ThermoFold"])
+STUDY = os.environ.get("STUDY", config["parameters"]["Study"])
+INPUT_DIR = STUDY = os.environ.get("INPUT_DIR", config["parameters"]["Input_dir"])
+PRIDE_ID = os.environ.get("PRIDE_ID", config["parameters"]["Pride_id"])
+VERSION = os.environ.get("VERSION", config["parameters"]["Version"])
+DB_SIZE = os.environ.get("DB_SIZE", config["parameters"]["Db_size"])
+METADATA = os.environ.get("METADATA", config["parameters"]["Metadata"])
+SEARCHGUI_OUTPUT = os.environ.get("SEARCHGUI_OUTPUT", config["output"]["searchgui_folder"])
+PEPTIDERSHAKER_OUTPUT = os.environ.get("PEPTIDERSHAKER_OUTPUT", config["output"]["peptidershaker_folder"])
 
 ##################################################
 # WORKDIR
@@ -41,74 +50,37 @@ PROCESSED_REPORTS_DIR = os.path.join(OUTPUTDIR,"Processed_Peptide_Reports")
 workdir:
     WORKDIR
 
-CONFIGDIR = 'config'
-SAMPLEINFO_FILE = os.path.join(CONFIGDIR, "sample_info.csv")
-SAMPLEINFO_FILE_FINAL = os.path.join(CONTIG_INFO_FILE_DIR, "sample_info_final.csv")
+
+
+#input files
+SAMPLEINFO_FILE = os.path.join(CONFIGDIR, METADATA)
 sample_info_final=pd.read_csv(SAMPLEINFO_FILE_FINAL, sep=',')
 sample_info     = pd.read_csv(SAMPLEINFO_FILE, sep=',')
 Samples         = sample_info['Sample'].drop_duplicates().to_list()
-
-# split the sample info file into two parts: proteomic raw files and genomic databases
 sample_raw = sample_info[['Sample','Raw file']].drop_duplicates()
 sample_raw[['filename','extension']] = sample_raw['Raw file'].str.split('.',expand=True)
 RawFiles        = (sample_raw['Sample']+'/'+sample_raw['filename']).to_list()
-
-# sample_info['Raw file URLs'].to_csv("config/rawurls.txt", index=False, header=False)
-# RawURLs         = os.path.join("","config/rawurls.txt")
-Proteins        = sample_info['Db_name'].drop_duplicates().to_list()
-HUMAN_FASTA = os.path.join(RESOURCEDIR, "human_db.fa")
 CRAP_FASTA = os.path.join(RESOURCEDIR, "crap_db.fa")
-I_PROTEINS = [os.path.splitext(os.path.basename(f))[0] for f in Proteins]
-Assemblies      =sample_info_final['Assembly'].to_list()
+HUMAN_FASTA = os.path.join(RESOURCEDIR, "human_db.fa")
 
-#input files
-STUDY = os.environ.get("STUDY", config["raws"]["Study"])
-PRIDE_ID = os.environ.get("PRIDE_ID", config["raws"]["Pride_id"])
-VERSION = os.environ.get("VERSION", config["raws"]["Version"])
-DB_SIZE = os.environ.get("DB_SIZE", config["raws"]["Db_size"])
-# I_PROTEINS = os.environ.get("PROTEINS", config["raws"]["Proteins"])
-# I_PROTEINS = sample_info['Db_name'].drop_duplicates().to_list()
-# I_THERMORAW = os.environ.get("THERMORAW", config["raws"]["ThermoRaw"])
-# I_THERMORAW = sample_info['Raw file'].to_list()
+#output files
+SAMPLEINFO_FILE_FINAL = os.path.join(CONTIG_INFO_FILE_DIR, "sample_info_final.csv")
+GFF_FILE = expand("PROCESSED_REPORTS_DIR/results/{aname}.gff",aname=Assemblies)
 
-
-# data
+# data (output from one rule being used as input for another))
 OUTPUT_FILE = expand("assemblies/{aname}_contig_info.txt", aname=Assemblies)
 PROTEIN_FILE = expand("assemblies/{aname}.faa.gz", aname=Assemblies)
-# THERMORAW_NAMES = [os.path.splitext(os.path.basename(f))[0] for f in I_THERMORAW]
-# THERMORAW_NAMES = [os.path.splitext(os.path.basename(f))[0] for f in I_THERMORAW]
 THERMORAW = expand("{iname}/{bname}.raw", iname=THERMOFOLD, bname=RawFiles)
-# THERMOMGF = expand("{fname}/{bname}.mzML", fname=THERMOFOLD, bname=THERMORAW_NAMES)
 THERMOMGF = expand("{iname}/{bname}.mzML", iname=THERMOFOLD, bname=RawFiles)
-
-METADATA_FILE=expand("{iname}_info.tsv",iname=STUDY)
-DATABASE_FILE=expand("assemblies/databases/unique_{iname}_cluster_set_1.fasta",iname=STUDY)
-# DATABASE_FILE = dynamic(expand("assemblies/databases/unique_{iname}_cluster_set_{{PART}}.faa", iname=STUDY))
-# PROTEINS_PROC  = expand("assemblies/databases/{pname}.fasta", pname=Proteins)
-PROTEINS_DECOY = expand("assemblies/databases/{pname}_concatenated_target_decoy.fasta", pname=I_PROTEINS)
-# PROTEINS_DECOY = expand("assemblies/databases/unique_{iname}_cluster_set_{{PART}}_concatenated_target_decoy.fasta", iname=STUDY)
-
 SEARCHGUI_PAR  = expand("searchgui/{fname}_searchgui.par", fname=PRIDE_ID)
 SEARCHGUI_ZIP  = expand("searchgui/{fname}_searchgui.zip", fname=Samples)
 PEPTIDESHAKER_MZID = expand("peptideshaker/{fname}_peptideshaker.mzid", fname=Samples)
 FINAL_MZID = expand("{fname}/{fname}_final.mzid", fname=THERMOFOLD)
-# PSM_TMP_RPT = expand("{fname}/peptideshaker_peptideshaker_1_Default_PSM_Report.txt", fname=THERMOFOLD)
-PROTEIN_TMP_RPT = expand("{fname}/peptideshaker_peptideshaker_1_Default_Protein_Report.txt", fname=THERMOFOLD)
-PEPTIDE_TMP_RPT = expand("{fname}/peptideshaker_peptideshaker_1_Default_Peptide_Report.txt", fname=THERMOFOLD)
-# PSM_RPT = expand("{fname}/{fname}_psm_report.txt", fname=THERMOFOLD)
+PSM_RPT = expand("{fname}/{fname}_psm_report.txt", fname=THERMOFOLD)
 RPT_NAMES = [os.path.splitext(os.path.basename(f))[0] for f in Samples]
 PROTEIN_RPT = expand("results/reports/proteins/{fname}_protein_report.txt", fname=RPT_NAMES)
 PEPTIDE_RPT = expand("results/reports/peptides/{fname}_peptide_report.txt", fname=RPT_NAMES)
 PROCESSED_RPT = expand("results/reports/processed/processed_{fname}_peptide_report.txt", fname=RPT_NAMES)
-
-ASSEMBLY_NAMES=os.path.join("","assembly_names.txt")
-METAP_SAMPLE_INFO = os.path.join(PROCESSED_REPORTS_DIR,"sample_info.csv")
-ASSEMBLY_NAME=[line.strip() for line in open(ASSEMBLY_NAMES).readlines()]
-GFF_FILE = expand("PROCESSED_REPORTS_DIR/results/{aname}.gff",aname=Assemblies)
-
-# output folders
-SEARCHGUI_OUTPUT = os.environ.get("SEARCHGUI_OUTPUT", config["output"]["searchgui_folder"])
-PEPTIDERSHAKER_OUTPUT = os.environ.get("PEPTIDERSHAKER_OUTPUT", config["output"]["peptidershaker_folder"])
 
 # tools
 THERMO_EXE = os.path.join(BINDIR, "ThermoRawFileParser/ThermoRawFileParser.exe")
@@ -116,9 +88,8 @@ SEARCHGUI_JAR = os.path.join(BINDIR, "SearchGUI-4.0.41/SearchGUI-4.0.41.jar")
 SEARCHGUI_PAR_PARAMS = " ".join(["-%s %s" % (k, "'%s'" % v if isinstance(v, str) else str(v)) for k, v in config["searchgui"]["par"].items()])
 PEPTIDESHAKER_JAR = os.path.join(BINDIR, "PeptideShaker-2.0.33/PeptideShaker-2.0.33.jar")
 
-PYTHON_SPT = os.path.join("","assembly_metadata.py")
-PYTHON_SPT1 = os.path.join('metagenomics_db',"main.py")
-PYTHON_SPT2 = os.path.join('gff_generation',"main.py")
+
+
 
 ##################################################
 # RULES
@@ -355,28 +326,6 @@ rule assembly_list:
                         f_in.write(item +'\n')
 
 
-#########################
-# Gff format file
-#########################
-rule gff_format_file:
-    input:
-        script=PYTHON_SPT2,
-        metap_sample_info=METAP_SAMPLE_INFO,
-        reports_dir=PROCESSED_REPORTS_DIR,
-        metag_dir=CONTIG_INFO_FILE
-    output:
-        GFF_FILE
-    params:
-        pride_id=PRIDE_ID
-    log:
-        expand("logs/{aname}_gff_generate.log", aname=ASSEMBLY_NAME)
-    threads: 1
-    message:
-        "Generating GFF format file: {input.metap_sample_info} -> {output}"
-    shell:
-        "python {input.script} -s {input.metap_sample_info} -r {input.reports_dir} "
-        "-m {input.metag_dir} -p {params.pride_id} &> {log}"
-
 
 ########################
 # Generate post processing reports
@@ -395,3 +344,28 @@ rule post_processing:
         "Post-processing: {input} -> {output}"
     shell:
         "python post_report_generation/main.py -s {input} -p {params} &> {log}"
+
+#########################
+# Gff format file
+#########################
+rule gff_format_file:
+    input:
+        script=PYTHON_SPT2,
+        metap_sample_info=SAMPLEINFO_FILE_FINAL,
+        reports_dir=PROCESSED_REPORTS_DIR,
+        metag_dir=CONTIG_INFO_FILE
+    output:
+        GFF_FILE
+    params:
+        pride_id=PRIDE_ID
+    log:
+        expand("logs/{aname}_gff_generate.log", aname=ASSEMBLY_NAME)
+    threads: 1
+    message:
+        "Generating GFF format file: {input.metap_sample_info} -> {output}"
+    shell:
+        "python {input.script} -s {input.metap_sample_info} -r {input.reports_dir} "
+        "-m {input.metag_dir} -p {params.pride_id} &> {log}"
+
+
+
