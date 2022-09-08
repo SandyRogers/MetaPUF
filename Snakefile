@@ -41,7 +41,7 @@ PRIDE_ID = os.environ.get("PRIDE_ID", config["parameters"]["Pride_id"])
 VERSION = os.environ.get("VERSION", config["parameters"]["Version"])
 DB_SIZE = os.environ.get("DB_SIZE", config["parameters"]["Db_size"])
 METADATA = os.environ.get("METADATA", config["raws"]["Metadata"])
-I_PROTEINS = os.environ.get("PROTEINS", config["parameters"]["Proteins"])
+# I_PROTEINS = os.environ.get("PROTEINS", config["parameters"]["Proteins"])
 SEARCHGUI_OUTPUT = os.environ.get("SEARCHGUI_OUTPUT", config["output"]["searchgui_folder"])
 PEPTIDERSHAKER_OUTPUT = os.environ.get("PEPTIDERSHAKER_OUTPUT", config["output"]["peptidershaker_folder"])
 
@@ -56,29 +56,28 @@ workdir:
 #input files
 SAMPLEINFO_FILE = os.path.join(CONFIGDIR, METADATA)
 sample_info     = pd.read_csv(SAMPLEINFO_FILE, sep=',')
-Assemblies      =sample_info['Assembly'].to_list()
+Assemblies      = sample_info['Assembly'].drop_duplicates().to_list()
 Samples         = sample_info['Sample'].drop_duplicates().to_list()
-sample_raw = sample_info[['Sample','Raw file']].drop_duplicates()
+sample_raw      = sample_info[['Sample','Raw file']].drop_duplicates()
 sample_raw[['filename','extension']] = sample_raw['Raw file'].str.split('.',expand=True)
-RawFiles        = (sample_raw['Sample']+'/'+sample_raw['filename']).to_list()
-CRAP_FASTA = os.path.join(RESOURCEDIR, "crap_db.fa")
-HUMAN_FASTA = os.path.join(RESOURCEDIR, "human_db.fa")
+RawFileNames    = (sample_raw['Sample']+'/'+sample_raw['filename']).to_list()
+CRAP_FASTA      = os.path.join(RESOURCEDIR, "crap_db.fa")
+HUMAN_FASTA     = os.path.join(RESOURCEDIR, "human_db.fa")
 
 # data (output from one rule being used as input for another))
 OUTPUT_FILE = expand("assemblies/{aname}_contig_info.txt", aname=Assemblies)
 PROTEIN_FILE = expand("assemblies/{aname}.faa.gz", aname=Assemblies)
-THERMORAW = expand("{iname}/{bname}.raw", iname=THERMOFOLD, bname=RawFiles)
-THERMOMGF = expand("{iname}/{bname}.mzML", iname=THERMOFOLD, bname=RawFiles)
+THERMORAW = expand("{iname}/{bname}.raw", iname=THERMOFOLD, bname=RawFileNames)
+THERMOMGF = expand("{iname}/{bname}.mzML", iname=THERMOFOLD, bname=RawFileNames)
 SEARCHGUI_PAR  = expand("searchgui/{fname}_searchgui.par", fname=PRIDE_ID)
 SEARCHGUI_ZIP  = expand("searchgui/{fname}_searchgui.zip", fname=Samples)
 PEPTIDESHAKER_MZID = expand("peptideshaker/{fname}_peptideshaker.mzid", fname=Samples)
-FINAL_MZID = expand("{fname}/{fname}_final.mzid", fname=THERMOFOLD)
-PSM_RPT = expand("{fname}/{fname}_psm_report.txt", fname=THERMOFOLD)
-RPT_NAMES = [os.path.splitext(os.path.basename(f))[0] for f in Samples]
-PROTEIN_RPT = expand("results/reports/proteins/{fname}_protein_report.txt", fname=RPT_NAMES)
-PEPTIDE_RPT = expand("results/reports/peptides/{fname}_peptide_report.txt", fname=RPT_NAMES)
-PROCESSED_RPT = expand("results/reports/processed/processed_{fname}_peptide_report.txt", fname=RPT_NAMES)
-PROTEINS_DECOY = expand("proteins/{pname}_concatenated_target_decoy.fasta", pname=I_PROTEINS)
+# FINAL_MZID = expand("{fname}/{fname}_final.mzid", fname=THERMOFOLD)
+# RPT_NAMES = [os.path.splitext(os.path.basename(f))[0] for f in Samples]
+PSM_RPT = expand("results/reports/proteins/{fname}_psm_report.txt", fname=Samples)
+PROTEIN_RPT = expand("results/reports/proteins/{fname}_protein_report.txt", fname=Samples)
+PEPTIDE_RPT = expand("results/reports/peptides/{fname}_peptide_report.txt", fname=Samples)
+PROCESSED_RPT = expand("results/reports/processed/processed_{fname}_peptide_report.txt", fname=Samples)
 
 # tools
 THERMO_EXE = os.path.join(BINDIR, "ThermoRawFileParser/ThermoRawFileParser.exe")
@@ -87,6 +86,7 @@ SEARCHGUI_PAR_PARAMS = " ".join(["-%s %s" % (k, "'%s'" % v if isinstance(v, str)
 PEPTIDESHAKER_JAR = os.path.join(BINDIR, "PeptideShaker-2.0.33/PeptideShaker-2.0.33.jar")
 
 #output files
+PROTEINS_DECOY = os.path.join(TMPDIR, "proteins_decoy_generated_check.txt")
 SAMPLEINFO_FILE_FINAL = os.path.join(CONTIG_INFO_FILE_DIR, "sample_info_final.csv")
 GFF_FILE = expand("PROCESSED_REPORTS_DIR/results/{aname}.gff",aname=Assemblies)
 
@@ -173,7 +173,7 @@ rule thermorawfileparser:
 #########################
 rule searchgui_decoy:
     input:
-        #faa=DATABASE_FILE,
+        info=SAMPLEINFO_FILE_FINAL,
         human_db=HUMAN_FASTA,
         crap_db=CRAP_FASTA,
         jar=SEARCHGUI_JAR
@@ -189,13 +189,13 @@ rule searchgui_decoy:
         os.path.join(ENVDIR, "IMP_proteomics.yaml")
     message:
         "SearchGUI decoy: {input.faa} -> {output}"
-    # run:
-    #     for protein in input.faa:
-    #         shell("java -cp {input.jar} eu.isas.searchgui.cmd.FastaCLI -in {protein} -decoy -temp_folder {params.tmpdir} -log {params.logdir} &> {log}")
     shell:
-        "for protein in {input.faa}; do cat {input.human_db} {input.crap_db} >> $protein; "
-        "java -cp {input.jar} eu.isas.searchgui.cmd.FastaCLI -in $protein "
-        "-decoy -temp_folder {params.tmpdir} -log {params.logdir} &> {log}; done "
+        "python generating_decoy.py -jar {input.jar} -info {input.info} "
+        "-human {input.human_db} -crap {input.crap_db} -tmp {params.tmpdir}"
+    # shell:
+    #     "for protein in {input.faa}; do cat {input.human_db} {input.crap_db} >> $protein; "
+    #     "java -cp {input.jar} eu.isas.searchgui.cmd.FastaCLI -in $protein "
+    #     "-decoy -temp_folder {params.tmpdir} -log {params.logdir} &> {log}; done "
 
 
 rule searchgui_config:
@@ -222,7 +222,7 @@ rule searchgui_config:
 rule searchgui_search:
     input:
         par=SEARCHGUI_PAR,
-        # faa=PROTEINS_DECOY,
+        flag=PROTEINS_DECOY,
         # mgf=THERMOMGF,
         jar=SEARCHGUI_JAR,
         info=SAMPLEINFO_FILE
@@ -238,7 +238,7 @@ rule searchgui_search:
     conda:
         os.path.join(ENVDIR, "IMP_proteomics.yaml")
     message:
-        "SearchGUI search: {input.par} -> {output}"
+        "SearchGUI search: {input.flag} -> {output}"
     shell:
         "python searchgui_search.py -s -jar {input.jar} -in {input.info} "
         "-out $(dirname {output[0]}) -par {input.par}"
@@ -348,6 +348,3 @@ rule gff_format_file:
     shell:
         "python gff_generation/main.py -s {input.metap_sample_info} -r {input.reports_dir} "
         "-m {input.metag_dir} -p {params.pride_id}"
-
-
-

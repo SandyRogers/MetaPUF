@@ -1,6 +1,6 @@
 raws:
     Metadata: "sample_info.csv"
-    
+
 parameters:
     Study: "ERP124921"
     Input_dir: "./"
@@ -9,7 +9,7 @@ parameters:
     Version: "5.0"
     Db_size: 1073741824
     ThermoFold: "input/Raw"
-    ThermoRaw: ["2018_March_5_UWPRQE_HatchMicro_16.raw"]
+    # ThermoRaw: ["2018_March_5_UWPRQE_HatchMicro_16.raw"]
     first_name: "Shengbo"
     last_name: "Wang"
     email: "shengbo_wang@ebi.ac.uk"
@@ -17,7 +17,7 @@ parameters:
     org_name: "EBI"
     org_email: "test@ebi.ac.uk"
     org_address: "Cambridge"
-sample: "sample"
+# sample: "sample"
 outputdir: "./"
 workdir: "./"
 tmp_dir: "tmp"
