@@ -308,23 +308,6 @@ rule peptideshaker_load:
     #     "-threads {threads} &> {log}; done"
 
 
-#########################
-# generate a list of assembly names from sample_info fil
-#########################
-rule assembly_list:
-    input:
-        info_file=METADATA
-    output:
-        ASSEMBLY_NAMES="assembly_names.txt"
-    run:
-        import pandas as pd
-        df = pd.read_csv(input.info_file)
-        assembly_list=list(set(input.info_file['analysis_accession'].to_list()))
-        with open(output.ASSEMBLY_NAMES, 'w') as f_in:
-                for item in assembly_list:
-                        f_in.write(item +'\n')
-
-
 
 ########################
 # Generate post processing reports
