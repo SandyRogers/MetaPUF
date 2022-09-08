@@ -82,6 +82,7 @@ PROTEIN_RPT = expand("results/reports/proteins/{fname}_protein_report.txt", fnam
 PEPTIDE_RPT = expand("results/reports/peptides/{fname}_peptide_report.txt", fname=RPT_NAMES)
 PROCESSED_RPT = expand("results/reports/processed/processed_{fname}_peptide_report.txt", fname=RPT_NAMES)
 
+
 # tools
 THERMO_EXE = os.path.join(BINDIR, "ThermoRawFileParser/ThermoRawFileParser.exe")
 SEARCHGUI_JAR = os.path.join(BINDIR, "SearchGUI-4.0.41/SearchGUI-4.0.41.jar")
@@ -366,6 +367,3 @@ rule gff_format_file:
     shell:
         "python {input.script} -s {input.metap_sample_info} -r {input.reports_dir} "
         "-m {input.metag_dir} -p {params.pride_id} &> {log}"
-
-
-
