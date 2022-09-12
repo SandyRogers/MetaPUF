@@ -46,12 +46,15 @@ def main():  # noqa: C901
     parser = ArgumentParser(
         description="Generate protein sequence database for Metagenomics and /or Metatranscriptomics datasets"
     )
-    parser.add_argument(
-        "-s","--study",
-        type=str,
-        required=True,
-        help="Secondary study accession of the assembled study starting with ERP/SRP/DRP ",
-    )
+    """
+    The user can enter their own data using --input_dir option
+    or
+    select --study to analyse study published on MGnify website
+    """
+
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("-s","--study",type=str,help="Secondary study accession of the assembled study in MGnify starting with ERP/SRP/DRP ")
+    group.add_argument("-i", "--input_dir", type=dir_path,help="full path of the study folder containing protein files ")
     parser.add_argument(
         "-v","--ver",
         type=str,
@@ -59,10 +62,10 @@ def main():  # noqa: C901
         help="pipeline version of MGnify analysis for the study",
     )
     parser.add_argument(
-        "-i","--input_dir",
+        "-o","--output_dir",
         type=dir_path,
         required=True,
-        help="full path of the study folder containing raw folder",
+        help="full path of the study folder containing results",
     )
     parser.add_argument(
         "-m","--metadata",
@@ -78,34 +81,39 @@ def main():  # noqa: C901
     starttime = time.time()
     args = parser.parse_args()
     sample_assembly_map = defaultdict(list)
-    os.chdir(args.input_dir)
-    fd.check_study_accession(args.study)
+
+    assembly_folder = os.path.join(args.output_dir, "assemblies")
+    if not os.path.isdir(assembly_folder):
+        subprocess.Popen(" ".join(["mkdir ", assembly_folder]), shell=True)
+    os.makedirs(assembly_folder, exist_ok=True)
+
+    os.chdir(args.output_dir)
+    if args.study:
+        fd.check_study_accession(args.study)
+        #getting the sequnece data and predicted cds
+        cmd_get_data = "  ".join(["mg-toolkit -d bulk_download -a",  args.study, "-p ", args.ver,  "-g sequence_data"])
+        subprocess.call(cmd_get_data, shell=True)
+        sequence_dir=args.output_dir+"/"+args.study+"/"+args.ver+"/sequence_data"
+        
+    elif args.input_dir:
+        if len(os.listdir(args.input_dir)) == 0:
+            sys.exit("{} is empty".format(args.input_dir))            
+        else:
+            sequence_dir=str(args.input_dir)
+            
     samples = pd.read_csv(args.metadata, sep=',')
     for idx,row in samples.iterrows():
         sample_assembly_map[row['Sample Accession']].append(row['Assembly'])
-    
     print(sample_assembly_map)
-    #getting the sequnece data and predicted cds
-    cmd_get_data = "  ".join(["mg-toolkit -d bulk_download -a",  args.study, "-p ", args.ver,  "-g sequence_data"])
-    
-    subprocess.call(cmd_get_data, shell=True)
-    assembly_folder = os.path.join(args.input_dir, "assemblies")
-    if not os.path.isdir(assembly_folder):
-        subprocess.Popen(" ".join(["mkdir ", assembly_folder]), shell=True)
-    
-    os.makedirs(assembly_folder, exist_ok=True)
-    sequence_dir=args.input_dir+"/"+args.study+"/5.0/sequence_data"
-    
     for k, v in sample_assembly_map.items():
         sample_file = os.path.join(assembly_folder, k + ".fasta.gz")
-        print(sample_file)
         with gzip.open(sample_file, "wt") as wf:
             for assembly in v:
                 #renaming headers of the predicted cds in assemblies
                 fd.rename_contigs(assembly, assembly_folder,sequence_dir)
                 with gzip.open(os.path.join(sequence_dir,assembly+"_FASTA.fasta.gz"), "rt") as infile:
                     shutil.copyfileobj(infile, wf)
-    matrix_file = os.path.join(assembly_folder, args.study+".tsv")
+    matrix_file = os.path.join(assembly_folder, "matrix_file.tsv")
 
     meta_genomes = [assembly_folder+"/"+k+".fasta.gz" for k in sample_assembly_map.keys()]
     minhashes = []
@@ -130,7 +138,7 @@ def main():  # noqa: C901
     col_names = data.index.to_list()
     data.columns=col_names
     # returns a dictionary containing assembly name and count of proteins in the asssembly
-    
+
     proteins_info = fd.count_proteins(sample_assembly_map,sequence_dir)
     database_folder = os.path.join(assembly_folder, "databases")
     if not os.path.isdir(database_folder):
@@ -139,7 +147,10 @@ def main():  # noqa: C901
     # returns a dictionary with the group number and assemblies in the group
     samples_in_cluster = gc.generate_clusters(data, args.db_size, proteins_info,args.study, database_folder, sample_assembly_map)
     logging.info(f"Samples in the cluster: f{samples_in_cluster}")
-    fd.build_db(args.study, database_folder,assembly_folder,samples,  samples_in_cluster)
+    if args.study:
+        fd.build_db(args.study, database_folder,assembly_folder,samples,  samples_in_cluster)
+    elif args.input_dir:
+        fd.build_db("study", database_folder,assembly_folder,samples,  samples_in_cluster)
     for file in os.listdir(database_folder):
         if file.endswith(".faa") and not file.startswith("unique"):
             protein_file=os.path.join(database_folder, file)
@@ -147,10 +158,10 @@ def main():  # noqa: C901
             fd.remove_file(protein_file)
     logging.info("Completed")
     logging.info("Runtime is {} seconds".format(time.time() - starttime))
+
 if __name__ == "__main__":
     log_file = "db_generate.log"
-    logging.basicConfig(
-        level=logging.DEBUG, filemode="w", format="%(message)s", datefmt="%H:%M:%S"
-    )
+    logging.basicConfig( filename=log_file, filemode="a",
+        level=logging.DEBUG, format="%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s", datefmt="%H:%M:%S"
+    ) 
     main()
-

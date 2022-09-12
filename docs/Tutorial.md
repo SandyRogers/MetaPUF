@@ -59,6 +59,12 @@ The workflow requires the following inputs in the config.yaml file:
 
 This parameter takes in European Nucleotide Archive (ENA) secondary study accession: starts with (ERP|DRP|SRP) followed by six digits.
 
+You can also input your own metagenomics and/ot metatranscriptomics assemblies and metaproteomics data from the same samples. There are some instructions regarding the naming convention to follow:
+
+- Assembly files should have file names ending with "".
+- The workflow accepts protein predicted from Prodigal.
+- The protein file names should end with "".
+
 * `Pride_id: PRIDE dataset accession For example (PXD003791)`
 
 * `Version: The version of MGnidy analysis.`
