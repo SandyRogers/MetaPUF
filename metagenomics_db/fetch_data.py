@@ -122,14 +122,6 @@ def build_db(study: str, db_dir:str,assembly_dir: str,sample_info: str, cluster_
                 with gzip.open(os.path.join(assembly_dir,assembly+".faa.gz"), "rt") as infile:
                     shutil.copyfileobj(infile, fasta_out)
 
-        db_size = "The estimated size of database is " + str(
-            stat(database_file).st_size
-        )
-        cluster_report = os.path.join(db_dir, "cluster_report.txt")
-        with open(cluster_report, "a", encoding="utf-8") as fin:
-            fin.write("\n")
-            fin.write(db_size + "\n")
-    
     #Writing database information in sample_info file
     for group_no, assembly_list in cluster_dict.items():
         for assembly in assembly_list:
@@ -156,6 +148,13 @@ def uniq_proteins(d_dir: str, db_name: str):
         for k, v in unique_records.items():
             fout.write(">" + k + "\n")
             fout.write(str(v) + "\n")
+    db_size = "The estimated size of database is " + str(stat(uniq_db).st_size)
+    cluster_report = os.path.join(db_dir, "cluster_report.txt")
+    with open(cluster_report, "a", encoding="utf-8") as fin:
+        fin.write("\n")
+        fin.write(db_size + "\n")
+
+
 
 def remove_file(file_name):
     try:

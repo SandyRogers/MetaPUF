@@ -1,0 +1,14 @@
+site_name: MetaPuf
+
+theme:
+  name: "material"
+
+nav:
+  - index.md
+  - Overview.md
+  - Workflow.md
+  - Tutorial.md
+
+
+markdown_extensions:
+  - tables

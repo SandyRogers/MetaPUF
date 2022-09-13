@@ -32,7 +32,7 @@ def dir_path(string):
 
 def main():  # noqa: C901
     """
-    Aggregate information from metaproteomics and metagenomics about the expressed proteins 
+    Aggregate information from metaproteomics and metagenomics about the expressed proteins
     and generate GFF format files for visualisation
     """
     parser = ArgumentParser(
@@ -65,13 +65,11 @@ def main():  # noqa: C901
 
     starttime = time.time()
     args = parser.parse_args()
-    sample_info=pd.read_csv(os.path.join(args.reports_dir,args.sample_info), sep=',')
+    sample_info=pd.read_csv(args.sample_info, sep=',')
     samples=list(set(sample_info['Sample'].to_list()))
     results_folder=os.path.join(args.reports_dir,"results")
-    if not os.path.isdir(results_folder):
-        subprocess.Popen(" ".join(["mkdir ", results_folder]), shell=True)
-
     os.makedirs(results_folder, exist_ok=True)
+    
     sample_file_list = [args.reports_dir+"/"+f for f in os.listdir(args.reports_dir) if f.endswith('_peptide_report.csv')]
     csv_list = []
     for file in sorted(sample_file_list):
@@ -88,8 +86,11 @@ def main():  # noqa: C901
         assembly_expressed_proteins=assembly_subset_of_proteins.merge(csv_merged, left_on='digest', right_on='Protein',how='inner')
         assembly_expressed_proteins.to_csv(os.path.join(results_folder,assembly+"_expressed_proteins.csv"))
         expressed_proteins=list(set(assembly_expressed_proteins['digest']))
-        attributes_file=gb.protein_report_processing(assembly_expressed_proteins,expressed_proteins,args.pride_id)
-        gb.gff_generation(attributes_file, assembly, results_folder)
+        attributes_file_h,attributes_file_l =gb.protein_report_processing(assembly_expressed_proteins,expressed_proteins,args.pride_id)
+        if len(attributes_file_h)>=1:
+            gb.gff_generation_high(args.reports_dir,attributes_file_h, assembly, results_folder)
+        if len(attributes_file_l)>=1:
+            gb.gff_generation_low(attributes_file_l, assembly, results_folder)
 
     logging.info("Completed")
     logging.info("Runtime is {} seconds".format(time.time() - starttime))
@@ -97,7 +98,7 @@ def main():  # noqa: C901
 
 if __name__ == "__main__":
     log_file = "gff_generate.log"
-    logging.basicConfig(
-        level=logging.DEBUG, filemode="w", format="%(message)s", datefmt="%H:%M:%S"
-    )
+    logging.basicConfig( filename=log_file, filemode="a",
+        level=logging.DEBUG, format="%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s", datefmt="%H:%M:%S"
+    ) 
     main()
