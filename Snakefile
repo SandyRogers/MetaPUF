@@ -36,7 +36,7 @@ ORG_EMAIL   = os.environ.get("ORG_EMAIL", config["parameters"]["org_email"])
 ORG_ADDRESS = os.environ.get("ORG_ADDRESS", config["parameters"]["org_address"])
 THERMOFOLD  = os.environ.get("THERMOFOLD", config["parameters"]["ThermoFold"])
 STUDY       = os.environ.get("STUDY", config["parameters"]["Study"])
-INPUT_DIR   = os.environ.get("INPUT_DIR", config["parameters"]["Input_dir"])
+# INPUT_DIR   = os.environ.get("INPUT_DIR", config["parameters"]["Input_dir"])
 PRIDE_ID    = os.environ.get("PRIDE_ID", config["parameters"]["Pride_id"])
 VERSION     = os.environ.get("VERSION", config["parameters"]["Version"])
 DB_SIZE     = os.environ.get("DB_SIZE", config["parameters"]["Db_size"])
@@ -89,7 +89,8 @@ PEPTIDESHAKER_JAR = os.path.join(BINDIR, "PeptideShaker-2.0.33/PeptideShaker-2.0
 CLUSTER_REPORT = os.path.join(CONTIG_INFO_FILE_DIR, "databases/cluster_report.txt")
 PROTEINS_DECOY = os.path.join(TMPDIR, "proteins_decoy_generated_check.txt")
 SAMPLEINFO_FILE_FINAL = os.path.join(CONTIG_INFO_FILE_DIR, "sample_info_final.csv")
-GFF_FILE = expand("PROCESSED_REPORTS_DIR/results/{aname}.gff",aname=Assemblies)
+GFF_FILE_H = expand("PROCESSED_REPORTS_DIR/results/{aname}_high_confidence.gff",aname=Assemblies)
+GFF_FILE_L = expand("PROCESSED_REPORTS_DIR/results/{aname}_low_confidence.gff",aname=Assemblies)
 
 ##################################################
 # RULES
@@ -105,7 +106,7 @@ rule ALL:
         peptideshaker=PEPTIDESHAKER_MZID,
         # assembly_list=ASSEMBLY_NAMES,
         processed=PROCESSED_RPT,
-        gff_files=GFF_FILE
+        gff_files=GFF_FILE_H
 
 
 
@@ -114,26 +115,28 @@ rule ALL:
 #########################
 rule generate_db:
     input:
-        # script=PYTHON_SPT1,
+        #script=PYTHON_SPT1,
         sample_metadata=SAMPLEINFO_FILE
     output:
-        # db_file=DATABASE_FILE,
         contigs_dir=OUTPUT_FILE,
         protein_file=PROTEIN_FILE,
-        cluster_rpt=CLUSTER_REPORT,
-        info=SAMPLEINFO_FILE_FINAL
+        sample_info_final=SAMPLEINFO_FILE_FINAL
     params:
-        study=STUDY,
+        study=STUDY if config["parameters"]["Study"] else config["parameters"]["Input_dir"],
+        #input_dir=INPUT_DIR,
         ver=VERSION,
-        input_dir=INPUT_DIR,
+        output_dir=OUTPUTDIR,
         db_size=DB_SIZE
     log:
-        expand("logs/{iname}_db_generate.log", iname=STUDY)
+        expand("logs/{iname}_db_generate.log",iname=STUDY)
     threads: 1
     message:
-        "DB_generate: {input.sample_metadata} -> {output.cluster_rpt}"
-    shell:
-        "python metagenomics_db/main.py -s {params.study} -v {params.ver} -i {params.input_dir} -m {input.sample_metadata} -b {params.db_size} &> {log}"
+        "DB_generate: {input.sample_metadata} -> {output.sample_info_final}"
+    run:
+        if params.study in config["parameters"]["Study"]:
+            shell("python metagenomics_db/main.py -s {params.study} -v {params.ver} -o {params.output_dir} -m {input.sample_metadata} -b {params.db_size} ")
+        elif params.study in config["parameters"]["Input_dir"]:
+            shell("python metagenomics_db/main.py -i {params.study} -v {params.ver} -o {params.output_dir} -m {input.sample_metadata} -b {params.db_size} ")
 
 
 #########################
@@ -336,21 +339,24 @@ rule post_processing:
 #########################
 # Gff format file
 #########################
-rule gff_format_file:
-    input:
-        #script=PYTHON_SPT2,
-        metap_sample_info=SAMPLEINFO_FILE_FINAL,
-        reports=PROCESSED_RPT
-    output:
-        GFF_FILE
-    params:
-        pride_id=PRIDE_ID,
-        metag_dir=CONTIG_INFO_FILE_DIR
-    log:
-        expand("logs/{aname}_gff_generate.log", aname=Assemblies)
-    threads: 1
-    message:
-        "Generating GFF format file: {input.metap_sample_info} -> {output}"
-    shell:
-        "python gff_generation/main.py -s {input.metap_sample_info} -r $(dirname {input.reports[0]}) "
-        "-m {params.metag_dir} -p {params.pride_id}"
+if  config["parameters"]["Study"]!='':
+    rule gff_format_file:
+        input:
+            metap_sample_info=SAMPLEINFO_FILE_FINAL,
+            reports_dir=PROCESSED_REPORTS_DIR,
+            metag_dir=CONTIG_INFO_FILE_DIR,
+        output:
+            gff_file_high_confidence=GFF_FILE_H,
+            gff_file_low_confidence=GFF_FILE_L
+        params:
+            pride_id=PRIDE_ID
+        #log:
+            #expand("logs/{aname}_gff_generate.log", aname=Assemblies)
+        threads: 1
+        message:
+            "Generating GFF format file: {input.metap_sample_info} -> {output.gff_file_high_confidence}"
+        shell:
+            "python gff_generation/main.py -s {input.metap_sample_info} -r {input.reports_dir} "
+            "-m {input.metag_dir} -p {params.pride_id} "
+else:
+    sys.exit()

@@ -68,10 +68,8 @@ def main():  # noqa: C901
     sample_info=pd.read_csv(args.sample_info, sep=',')
     samples=list(set(sample_info['Sample'].to_list()))
     results_folder=os.path.join(args.reports_dir,"results")
-    if not os.path.isdir(results_folder):
-        subprocess.Popen(" ".join(["mkdir ", results_folder]), shell=True)
-
     os.makedirs(results_folder, exist_ok=True)
+    
     sample_file_list = [args.reports_dir+"/"+f for f in os.listdir(args.reports_dir) if f.endswith('_peptide_report.csv')]
     csv_list = []
     for file in sorted(sample_file_list):
@@ -100,7 +98,7 @@ def main():  # noqa: C901
 
 if __name__ == "__main__":
     log_file = "gff_generate.log"
-    logging.basicConfig(
-        level=logging.DEBUG, filemode="w", format="%(message)s", datefmt="%H:%M:%S"
-    )
+    logging.basicConfig( filename=log_file, filemode="a",
+        level=logging.DEBUG, format="%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s", datefmt="%H:%M:%S"
+    ) 
     main()
