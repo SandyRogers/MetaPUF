@@ -6,7 +6,7 @@ Here below you can find tutorials on how to use some of the MetaPUF pipelines an
 
 ### From Bioconda
 
-The pipelines in MetaPUF rely on thrid party software such as Snakemake or mg-toolkit that are not python libraries. We therefore recommend to use conda that provides pre-compiled software for you.
+The pipelines in MetaPUF rely on third party software such as Snakemake or mg-toolkit that are not python libraries. We therefore recommend to use conda that provides pre-compiled software for you.
 
 #### Install conda executable
 
@@ -28,7 +28,7 @@ conda config --get channels
 
 #### Create a conda environment
 
-Once miniconda is installed and teh channels set, you can create a new enviroment for MetaPUF using the command
+Once miniconda is installed and the channels set, you can create a new environment for MetaPUF using the command
 
 ```
 conda env --name metapuf create --f metapuf_env.yml
@@ -59,7 +59,7 @@ The workflow requires the following inputs in the config.yaml file:
 
 This parameter takes in European Nucleotide Archive (ENA) secondary study accession: starts with (ERP|DRP|SRP) followed by six digits.
 
-You can also input your own metagenomics and/ot metatranscriptomics assemblies and metaproteomics data from the same samples. There are some instructions regarding the naming convention to follow:
+You can also input your own metagenomics and/or metatranscriptomics assemblies and metaproteomics data from the same samples. There are some instructions regarding the naming convention to follow:
 
 - Assembly files should have file names ending with "".
 - The workflow accepts protein predicted from Prodigal.
@@ -81,7 +81,7 @@ Sample  | PRIDE Accession  | Raw file  | Raw file URLs  | Sample Accession  | As
 --|---|---|---|---|--
  S6 |  PXD005780 | S6.raw | https://ftp.pride.ebi.ac.uk/pride/data/archive/2017/07/PXD005780/S6.raw  | ERS1509315  |  ERZ1669330
 
-This workflow looks for this file in the config directory.
+This workflow looks for this file in the config directory. You don't need to provide the `RIDE Accession` number and `Raw file URLs`if you have the data locally, and just leave the column as blank, however the header is still needed.
 
 ## **Quick start**
 

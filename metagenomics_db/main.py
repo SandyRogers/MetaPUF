@@ -94,13 +94,13 @@ def main():  # noqa: C901
         cmd_get_data = "  ".join(["mg-toolkit -d bulk_download -a",  args.study, "-p ", args.ver,  "-g sequence_data"])
         subprocess.call(cmd_get_data, shell=True)
         sequence_dir=args.output_dir+"/"+args.study+"/"+args.ver+"/sequence_data"
-        
+
     elif args.input_dir:
         if len(os.listdir(args.input_dir)) == 0:
-            sys.exit("{} is empty".format(args.input_dir))            
+            sys.exit("{} is empty".format(args.input_dir))
         else:
             sequence_dir=str(args.input_dir)
-            
+
     samples = pd.read_csv(args.metadata, sep=',')
     for idx,row in samples.iterrows():
         sample_assembly_map[row['Sample Accession']].append(row['Assembly'])
@@ -160,8 +160,8 @@ def main():  # noqa: C901
     logging.info("Runtime is {} seconds".format(time.time() - starttime))
 
 if __name__ == "__main__":
-    log_file = "db_generate.log"
+    log_file = "logs/db_generate.log"
     logging.basicConfig( filename=log_file, filemode="a",
         level=logging.DEBUG, format="%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s", datefmt="%H:%M:%S"
-    ) 
+    )
     main()

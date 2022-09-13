@@ -211,8 +211,8 @@ rule searchgui_config:
         expand("logs/{fname}_SearchGUI_params.log",fname=PRIDE_ID)
     params:
         params = SEARCHGUI_PAR_PARAMS,
-        tmpdir = TMPDIR,
-        logdir = "logs/SearchGUI_params"
+        tmpdir = TMPDIR
+        # logdir = "logs/SearchGUI_params"
     threads: 1
     conda:
         os.path.join(ENVDIR, "IMP_proteomics.yaml")
@@ -220,7 +220,7 @@ rule searchgui_config:
         "SearchGUI parameters: {input} -> {output}"
     shell:
         "java -cp {input.jar} eu.isas.searchgui.cmd.IdentificationParametersCLI -out {output} "
-        "{params.params} -temp_folder {params.tmpdir} -log {params.logdir} &> {log}"
+        "{params.params} -temp_folder {params.tmpdir} &> {log}"
 
 
 rule searchgui_search:
