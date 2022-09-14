@@ -148,7 +148,7 @@ def main():  # noqa: C901
     samples_in_cluster = gc.generate_clusters(data, args.db_size, proteins_info,args.study, database_folder, sample_assembly_map)
     logging.info(f"Samples in the cluster: f{samples_in_cluster}")
     if args.study:
-        fd.build_db(args.study, database_folder,assembly_folder,samples,  samples_in_cluster)
+        fd.build_db(args.study, database_folder, assembly_folder, samples, samples_in_cluster)
     elif args.input_dir:
         fd.build_db("study", database_folder,assembly_folder,samples,  samples_in_cluster)
     for file in os.listdir(database_folder):

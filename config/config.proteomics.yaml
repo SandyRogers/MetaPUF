@@ -3,7 +3,7 @@ raws:
 
 parameters:
     Study: "ERP124921"
-    Input_dir: "./"
+    # Input_dir: "./"
     Proteins: "ERP021080"
     Pride_id: "PXD005780"
     Version: "5.0"

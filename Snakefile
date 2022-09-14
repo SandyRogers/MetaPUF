@@ -36,7 +36,6 @@ ORG_EMAIL   = os.environ.get("ORG_EMAIL", config["parameters"]["org_email"])
 ORG_ADDRESS = os.environ.get("ORG_ADDRESS", config["parameters"]["org_address"])
 THERMOFOLD  = os.environ.get("THERMOFOLD", config["parameters"]["ThermoFold"])
 STUDY       = os.environ.get("STUDY", config["parameters"]["Study"])
-# INPUT_DIR   = os.environ.get("INPUT_DIR", config["parameters"]["Input_dir"])
 PRIDE_ID    = os.environ.get("PRIDE_ID", config["parameters"]["Pride_id"])
 VERSION     = os.environ.get("VERSION", config["parameters"]["Version"])
 DB_SIZE     = os.environ.get("DB_SIZE", config["parameters"]["Db_size"])
@@ -99,14 +98,14 @@ GFF_FILE_L = expand("PROCESSED_REPORTS_DIR/results/{aname}_low_confidence.gff",a
 rule ALL:
     input:
         # dynamic(expand("assemblies/databases/unique_{iname}_cluster_set_{{PART}}.faa", iname=STUDY)),
-        database=[OUTPUT_FILE, PROTEIN_FILE, CLUSTER_REPORT],
-        thermo=[THERMORAW, THERMOMGF],
-        searchgui=[SAMPLEINFO_FILE_FINAL, PROTEINS_DECOY, SEARCHGUI_PAR, SEARCHGUI_ZIP],
-        report=[PROTEIN_RPT, PEPTIDE_RPT],
-        peptideshaker=PEPTIDESHAKER_MZID,
-        # assembly_list=ASSEMBLY_NAMES,
-        processed=PROCESSED_RPT,
-        gff_files=GFF_FILE_H
+        database=[OUTPUT_FILE, PROTEIN_FILE, SAMPLEINFO_FILE_FINAL, CLUSTER_REPORT]
+        # thermo=[THERMORAW, THERMOMGF],
+        # searchgui=[PROTEINS_DECOY, SEARCHGUI_PAR, SEARCHGUI_ZIP],
+        # report=[PROTEIN_RPT, PEPTIDE_RPT],
+        # peptideshaker=PEPTIDESHAKER_MZID,
+        # # assembly_list=ASSEMBLY_NAMES,
+        # processed=PROCESSED_RPT,
+        # gff_files=[GFF_FILE_H, GFF_FILE_L]
 
 
 
@@ -115,15 +114,14 @@ rule ALL:
 #########################
 rule generate_db:
     input:
-        #script=PYTHON_SPT1,
         sample_metadata=SAMPLEINFO_FILE
     output:
         contigs_dir=OUTPUT_FILE,
         protein_file=PROTEIN_FILE,
-        sample_info_final=SAMPLEINFO_FILE_FINAL
+        sample_info_final=SAMPLEINFO_FILE_FINAL,
+        cluster_rpt=CLUSTER_REPORT
     params:
         study=STUDY if config["parameters"]["Study"] else config["parameters"]["Input_dir"],
-        #input_dir=INPUT_DIR,
         ver=VERSION,
         output_dir=OUTPUTDIR,
         db_size=DB_SIZE
@@ -189,8 +187,8 @@ rule searchgui_decoy:
     log:
         expand("logs/{fname}_SearchGUI_decoy.log",fname=PRIDE_ID)
     params:
-        tmpdir = TMPDIR,
-        logdir = "logs/SearchGUI_decoy"
+        tmpdir = TMPDIR
+        # logdir = "logs/SearchGUI_decoy"
     threads: 1
     conda:
         os.path.join(ENVDIR, "IMP_proteomics.yaml")
@@ -343,20 +341,19 @@ if  config["parameters"]["Study"]!='':
     rule gff_format_file:
         input:
             metap_sample_info=SAMPLEINFO_FILE_FINAL,
-            reports_dir=PROCESSED_REPORTS_DIR,
-            metag_dir=CONTIG_INFO_FILE_DIR,
+            rpt=PROCESSED_RPT
         output:
             gff_file_high_confidence=GFF_FILE_H,
             gff_file_low_confidence=GFF_FILE_L
         params:
+            reports_dir=PROCESSED_REPORTS_DIR,
+            metag_dir=CONTIG_INFO_FILE_DIR,
             pride_id=PRIDE_ID
-        #log:
-            #expand("logs/{aname}_gff_generate.log", aname=Assemblies)
         threads: 1
         message:
             "Generating GFF format file: {input.metap_sample_info} -> {output.gff_file_high_confidence}"
         shell:
-            "python gff_generation/main.py -s {input.metap_sample_info} -r {input.reports_dir} "
-            "-m {input.metag_dir} -p {params.pride_id} "
+            "python gff_generation/main.py -s {input.metap_sample_info} -r {params.reports_dir} "
+            "-m {params.metag_dir} -p {params.pride_id} "
 else:
     sys.exit()

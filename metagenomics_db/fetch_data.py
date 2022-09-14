@@ -111,7 +111,7 @@ def count_proteins(sample_assembly_dict: dict, seq_dir: str):
         protein_counts[sample]=total_count
     return protein_counts
 
-def build_db(study: str, db_dir:str,assembly_dir: str,sample_info: str, cluster_dict: dict):
+def build_db(study: str, db_dir:str, assembly_dir: str, sample_info: str, cluster_dict: dict):
     sample_info['Db_name']=""
     for group_no, assembly_list in cluster_dict.items():
         total_count=0
@@ -149,7 +149,7 @@ def uniq_proteins(d_dir: str, db_name: str):
             fout.write(">" + k + "\n")
             fout.write(str(v) + "\n")
     db_size = "The estimated size of database is " + str(stat(uniq_db).st_size)
-    cluster_report = os.path.join(db_dir, "cluster_report.txt")
+    cluster_report = os.path.join(d_dir, "cluster_report.txt")
     with open(cluster_report, "a", encoding="utf-8") as fin:
         fin.write("\n")
         fin.write(db_size + "\n")
