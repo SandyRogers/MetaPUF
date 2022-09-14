@@ -104,14 +104,14 @@ GFF_FILE = expand("Processed_Peptide_Reports/results/{aname}_expressed_proteins.
 rule ALL:
     input:
         # dynamic(expand("assemblies/databases/unique_{iname}_cluster_set_{{PART}}.faa", iname=STUDY)),
-        # database=[OUTPUT_FILE,PROTEIN_FILE,SAMPLEINFO_FILE_FINAL],
+        database=[OUTPUT_FILE,PROTEIN_FILE,SAMPLEINFO_FILE_FINAL, CLUSTER_REPORT],
         # thermo=[THERMORAW, THERMOMGF],
         # searchgui=[PROTEINS_DECOY, SEARCHGUI_PAR, SEARCHGUI_ZIP]
         #report=[PROTEIN_RPT, PEPTIDE_RPT],
         #peptideshaker=PEPTIDESHAKER_MZID
         # assembly_list=ASSEMBLY_NAMES,
         # processed=PROCESSED_RPT,
-        gff_files=[GFF_FILE]
+        # gff_files=[GFF_FILE]
 
 
 
@@ -124,7 +124,8 @@ rule generate_db:
     output:
         contigs_dir=OUTPUT_FILE,
         protein_file=PROTEIN_FILE,
-        sample_info_final=SAMPLEINFO_FILE_FINAL
+        sample_info_final=SAMPLEINFO_FILE_FINAL,
+        cluster_report=CLUSTER_REPORT
     params:
         study=STUDY if config["parameters"]["Study"] else config["parameters"]["Input_dir"],
         ver=VERSION,
@@ -181,7 +182,8 @@ rule searchgui_decoy:
         info=SAMPLEINFO_FILE_FINAL,
         human_db=HUMAN_FASTA,
         crap_db=CRAP_FASTA,
-        jar=SEARCHGUI_JAR
+        jar=SEARCHGUI_JAR,
+        cluster_rpt=CLUSTER_REPORT
     output:
         PROTEINS_DECOY
     log:
@@ -193,7 +195,7 @@ rule searchgui_decoy:
     conda:
         os.path.join(ENVDIR, "IMP_proteomics.yaml")
     message:
-        "SearchGUI decoy: {input.faa} -> {output}"
+        "SearchGUI decoy: {input.cluster_rpt} -> {output}"
     shell:
         "python generating_decoy.py -jar {input.jar} -info {input.info} "
         "-human {input.human_db} -crap {input.crap_db} -tmp {params.tmpdir}"

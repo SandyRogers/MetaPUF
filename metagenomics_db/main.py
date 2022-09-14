@@ -94,14 +94,16 @@ def main():  # noqa: C901
         sequence_dir=args.output_dir+"/"+args.study+"/"+args.ver+"/sequence_data"
         
     elif args.input_dir:
+        ## Assembly input files should be gzipped and end with "_FASTA.fasta.gz"
+        ## Prodigal (v.2.6.3) predicted CDS file should be gzipped and end with "_FASTA_predicted_cds.faa.gz"
         if len(os.listdir(args.input_dir)) == 0:
             sys.exit("{} is empty".format(args.input_dir))       
         else:
             sequence_dir=str(args.input_dir)
         for input_file in os.listdir(args.input_dir):
-            if input_file.endswith("_FASTA.fasta.gz") | input_file.endswith("_FASTA.fasta"):
+            if input_file.endswith("_FASTA.fasta.gz"):
                 continue
-            elif input_file.endswith("_FASTA.faa.gz") | input_file.endswith("_FASTA.faa"):
+            elif input_file.endswith("_FASTA_predicted_cds.faa.gz"):
                 continue
             else:
                 logging.info("The input files are not named with correct naming convention. Please check documentation for correct naming convention")
