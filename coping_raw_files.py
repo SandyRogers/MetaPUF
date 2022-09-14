@@ -55,7 +55,7 @@ def thermorawfileparser(exe_file, info_file, output_folder):
         rawfile = os.path.join(folder, RawFiles[i])
         commandline += " mono " + exe_file + " -i=" + rawfile + " -o=" + folder
         # -f=1 means mzML format file
-        commandline += " -f=1 -m=0 &> logs/" + samples[i] + "_thermorawfileparser.log"
+        commandline += " -f=0 -m=0 &> logs/" + samples[i] + "_thermorawfileparser.log"
         # print(commandline)
         subprocess.run(commandline, shell=True)
 

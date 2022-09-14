@@ -111,32 +111,24 @@ def count_proteins(sample_assembly_dict: dict, seq_dir: str):
         protein_counts[sample]=total_count
     return protein_counts
 
-def build_db(study: str, db_dir:str,assembly_dir: str,sample_info: str, cluster_dict: dict):
-    sample_info['Db_name']=""
+def build_db(study_acc, db_dir,assembly_dir,sample_df, cluster_dict):
+    sample_df['Db_name']=""
     for group_no, assembly_list in cluster_dict.items():
         total_count=0
-        db_name = study + "_cluster_set_" + str(group_no) + ".faa"
+        db_name = study_acc + "_cluster_set_" + str(group_no) + ".faa"
         database_file = os.path.join(db_dir, db_name)
         with open(database_file, 'w') as fasta_out:
             for assembly in assembly_list:
                 with gzip.open(os.path.join(assembly_dir,assembly+".faa.gz"), "rt") as infile:
                     shutil.copyfileobj(infile, fasta_out)
 
-        db_size = "The estimated size of database is " + str(
-            stat(database_file).st_size
-        )
-        cluster_report = os.path.join(db_dir, "cluster_report.txt")
-        with open(cluster_report, "a", encoding="utf-8") as fin:
-            fin.write("\n")
-            fin.write(db_size + "\n")
-    
-    #Writing database information in sample_info file
+    #Writing database information in sample_df file
     for group_no, assembly_list in cluster_dict.items():
         for assembly in assembly_list:
-            for i in range(len(sample_info)):
-                if assembly==sample_info['Assembly'][i]:
-                    sample_info['Db_name'][i]=study + "_cluster_set_" + str(group_no) + ".faa"
-    sample_info.to_csv(os.path.join(assembly_dir, "sample_info_final.csv"))
+            for i in range(len(sample_df)):
+                if assembly==sample_df['Assembly'][i]:
+                    sample_df['Db_name'][i]=study_acc + "_cluster_set_" + str(group_no) + ".faa"
+    sample_df.to_csv(os.path.join(assembly_dir, "sample_info_final.csv"))
 
 
 def uniq_proteins(d_dir: str, db_name: str):
@@ -156,6 +148,13 @@ def uniq_proteins(d_dir: str, db_name: str):
         for k, v in unique_records.items():
             fout.write(">" + k + "\n")
             fout.write(str(v) + "\n")
+    db_size = "The estimated size of database is " + str(stat(uniq_db).st_size)
+    cluster_report = os.path.join(d_dir, "cluster_report.txt")
+    with open(cluster_report, "a", encoding="utf-8") as fin:
+        fin.write("\n")
+        fin.write(db_size + "\n")
+
+
 
 def remove_file(file_name):
     try:
