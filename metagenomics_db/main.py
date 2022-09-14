@@ -54,7 +54,7 @@ def main():  # noqa: C901
 
     group = parser.add_mutually_exclusive_group()
     group.add_argument("-s","--study",type=str,help="Secondary study accession of the assembled study in MGnify starting with ERP/SRP/DRP ")
-    group.add_argument("-i", "--input_dir", type=dir_path,help="full path of the study folder containing protein files ")
+    group.add_argument("-d", "--input_dir", type=dir_path,help="full path of the study folder containing protein files ")
     parser.add_argument(
         "-v","--ver",
         type=str,
@@ -83,8 +83,6 @@ def main():  # noqa: C901
     sample_assembly_map = defaultdict(list)
 
     assembly_folder = os.path.join(args.output_dir, "assemblies")
-    if not os.path.isdir(assembly_folder):
-        subprocess.Popen(" ".join(["mkdir ", assembly_folder]), shell=True)
     os.makedirs(assembly_folder, exist_ok=True)
 
     os.chdir(args.output_dir)
@@ -94,13 +92,20 @@ def main():  # noqa: C901
         cmd_get_data = "  ".join(["mg-toolkit -d bulk_download -a",  args.study, "-p ", args.ver,  "-g sequence_data"])
         subprocess.call(cmd_get_data, shell=True)
         sequence_dir=args.output_dir+"/"+args.study+"/"+args.ver+"/sequence_data"
-
+        
     elif args.input_dir:
         if len(os.listdir(args.input_dir)) == 0:
-            sys.exit("{} is empty".format(args.input_dir))
+            sys.exit("{} is empty".format(args.input_dir))       
         else:
             sequence_dir=str(args.input_dir)
-
+        for input_file in os.listdir(args.input_dir):
+            if input_file.endswith("_FASTA.fasta.gz") | input_file.endswith("_FASTA.fasta"):
+                continue
+            elif input_file.endswith("_FASTA.faa.gz") | input_file.endswith("_FASTA.faa"):
+                continue
+            else:
+                logging.info("The input files are not named with correct naming convention. Please check documentation for correct naming convention")
+            
     samples = pd.read_csv(args.metadata, sep=',')
     for idx,row in samples.iterrows():
         sample_assembly_map[row['Sample Accession']].append(row['Assembly'])
@@ -160,8 +165,8 @@ def main():  # noqa: C901
     logging.info("Runtime is {} seconds".format(time.time() - starttime))
 
 if __name__ == "__main__":
-    log_file = "logs/db_generate.log"
+    log_file = "db_generate.log"
     logging.basicConfig( filename=log_file, filemode="a",
         level=logging.DEBUG, format="%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s", datefmt="%H:%M:%S"
-    )
+    ) 
     main()
