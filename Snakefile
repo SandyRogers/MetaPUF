@@ -105,7 +105,7 @@ GFF_FILE = expand("Processed_Peptide_Reports/results/{aname}_expressed_proteins.
 rule ALL:
     input:
         # dynamic(expand("assemblies/databases/unique_{iname}_cluster_set_{{PART}}.faa", iname=STUDY)),
-        database=[OUTPUT_FILE,PROTEIN_FILE,SAMPLEINFO_FILE_FINAL, CLUSTER_REPORT],
+        database=[OUTPUT_FILE,PROTEIN_FILE,SAMPLEINFO_FILE_FINAL, CLUSTER_REPORT]
         # thermo=[THERMORAW, THERMOMGF],
         # searchgui=[PROTEINS_DECOY, SEARCHGUI_PAR, SEARCHGUI_ZIP]
         #report=[PROTEIN_RPT, PEPTIDE_RPT],
@@ -139,9 +139,9 @@ rule generate_db:
         "DB_generate: {input.sample_metadata} -> {output.sample_info_final}"
     run:
         if params.study in config["parameters"]["Study"]:
-            shell("python metagenomics_db/main.py -s {params.study} -v {params.ver} -o {params.output_dir} -m {input.sample_metadata} -b {params.db_size} ")
+            shell("python metagenomics_db/main.py -s {params.study} -v {params.ver} -o {params.output_dir} -m {input.sample_metadata} -b {params.db_size} &> {log}")
         elif params.study in config["parameters"]["Input_dir"]:
-            shell("python metagenomics_db/main.py -d {params.study} -v {params.ver} -o {params.output_dir} -m {input.sample_metadata} -b {params.db_size} ")
+            shell("python metagenomics_db/main.py -d {params.study} -v {params.ver} -o {params.output_dir} -m {input.sample_metadata} -b {params.db_size} &> {log}")
 
 
 #########################
