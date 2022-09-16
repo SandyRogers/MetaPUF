@@ -27,7 +27,7 @@ def dir_path(string):
         raise NotADirectoryError(string)
 
 
-def main(): 
+def main():
     """
     Aggregate information from metaproteomics and metagenomics about the expressed proteins
     and generate processed peptide reports for gff file generation
@@ -50,9 +50,9 @@ def main():
     samples=list(set(sample_info['Sample'].to_list()))
 
     for sample in samples:
-        th.get_track_beds('results/reports/peptides/'+sample+'_peptide_report.txt',
-                        'results/reports/proteins/'+sample+'_protein_report.txt',
-                        'results/reports/processed/processed_'+sample+'_peptide_report.csv',
+        th.get_track_beds('peptideshaker/'+sample+'_Default_Peptide_Report.txt',
+                        'peptideshaker/'+sample+'_Default_Protein_Report.txt',
+                        'PROCESSED_REPORTS_DIR/processed_'+sample+'_peptide_report.csv',
                         args.pride_id)
 
 

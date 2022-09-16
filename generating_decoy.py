@@ -27,15 +27,17 @@ def get_args():
         sys.exit('Error: no human reference protein database provided!')
     if args.crap_db is None:
         sys.exit('Error: no contanminat protein database provided!')
-    if args.exe_file is None:
+    if args.jar_file is None:
         sys.exit('Error: no jar file provided!')
     if args.tmp_dir is None:
         sys.exit('Error: no tmp folder provided!')
 
     return args
 
-
-def searchgui_decoy(jar_file, info_file, human_db, crap_db, tmpdir):
+# info_file = 'assemblies/sample_info_final.csv'
+# human_db = 'resources/human_db.fa'
+# crap_db = 'resources/crap_db.fa'
+def searchgui_decoy(jar_file, info_file, human_db, crap_db, tmp_dir):
     """
     adding human, contanminat and decoy to the protein databases.
     :jar_file:      the searchgui jar file (whole path)
@@ -45,17 +47,13 @@ def searchgui_decoy(jar_file, info_file, human_db, crap_db, tmpdir):
     """
     sample_info = pd.read_csv(info_file, sep=',')
     proteins = sample_info['Db_name'].drop_duplicates().to_list()
-    filenames = [human_db, crap_db]
 
     for protein in proteins:
-        protein_file = " assemblies/databases/" + protein
-        with open(protein_file, 'w') as outfile:
-            for fname in filenames:
-                with open(fname) as infile:
-                    for line in infile:
-                        outfile.write(line)
+        protein_file = "assemblies/databases/" + protein
+        fasta = protein_file.split('.')[0] + '.fasta'
+        commandline = "cat " + protein_file + " " + human_db + " " + crap_db + " > " + fasta + ";"
 
-        params = " -in" + protein_file
+        params = " -in " + fasta
         params += " -decoy &> "
         params += "logs/" + protein + "_SearchGUI_search.log"
 
@@ -64,9 +62,9 @@ def searchgui_decoy(jar_file, info_file, human_db, crap_db, tmpdir):
 
         subprocess.run(commandline, shell=True)
 
-    commandline = "mkdir -p " + tmpdir
+    commandline = "mkdir -p " + tmp_dir
     subprocess.run(commandline, shell=True)
-    flag_txt = "proteins_decoy_generated_check.txt"
+    flag_txt = tmp_dir+"/proteins_decoy_generated_check.txt"
     with open(flag_txt, 'w') as f:
         f.write('All protein databases have been processed!')
 
@@ -77,7 +75,7 @@ def main():
     """
     args = get_args()
 
-    searchgui_decoy(args.jar_file, args.info_file, args.human_db, args.crap_db, args.tmpdir)
+    searchgui_decoy(args.jar_file, args.info_file, args.human_db, args.crap_db, args.tmp_dir)
 
 
 if __name__ == "__main__":

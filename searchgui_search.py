@@ -93,11 +93,11 @@ def peptideshaker_load(jar_file, input_file, output_folder, first_name, last_nam
     samples = sample_info['Sample'].drop_duplicates().to_list()
 
     for sample in samples:
-        params = " -reference 'peptideshaker_peptideshaker_1'"
+        params = " -reference " + sample
         params += " -identification_files searchgui/" + sample + "_searchgui.zip"
-        params += " -out_reports " + output_folder + "/" + sample
+        params += " -out_reports " + output_folder
         params += " -reports 6,9"
-        params += " -report_prefix " + sample
+        # params += " -report_prefix " + sample + "_"
         params += " -output_file " + sample + "_peptideshaker.mzid"
         params += " -contact_first_name '" + first_name + "'"
         params += " -contact_last_name '" + last_name + "'"

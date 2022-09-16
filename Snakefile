@@ -21,7 +21,7 @@ CONFIGDIR   = srcdir("config")
 RESOURCEDIR = srcdir("resources")
 WORKDIR     = os.environ.get("WORKDIR", config['workdir'])
 OUTPUTDIR   = os.environ.get("OUTPUTDIR", config['outputdir'])
-TMPDIR      = os.environ.get("TMPDIR", config['tmp_dir'])
+TMPDIR      = os.environ.get("TMPDIR", config['tmpdir'])
 CONTIG_INFO_FILE_DIR = os.path.join(OUTPUTDIR,"assemblies")
 PROCESSED_REPORTS_DIR = os.path.join(OUTPUTDIR,"Processed_Peptide_Reports")
 
@@ -42,7 +42,7 @@ DB_SIZE     = os.environ.get("DB_SIZE", config["parameters"]["Db_size"])
 METADATA    = os.environ.get("METADATA", config["raws"]["Metadata"])
 # I_PROTEINS = os.environ.get("PROTEINS", config["parameters"]["Proteins"])
 SEARCHGUI_OUTPUT = os.environ.get("SEARCHGUI_OUTPUT", config["output"]["searchgui_folder"])
-PEPTIDERSHAKER_OUTPUT = os.environ.get("PEPTIDERSHAKER_OUTPUT", config["output"]["peptidershaker_folder"])
+PEPTIDESHAKER_OUTPUT = os.environ.get("PEPTIDESHAKER_OUTPUT", config["output"]["peptideshaker_folder"])
 
 ##################################################
 # WORKDIR
@@ -70,13 +70,13 @@ THERMORAW = expand("{iname}/{bname}.raw", iname=THERMOFOLD, bname=RawFileNames)
 THERMOMGF = expand("{iname}/{bname}.mgf", iname=THERMOFOLD, bname=RawFileNames)
 SEARCHGUI_PAR  = expand("searchgui/{fname}_searchgui.par", fname=PRIDE_ID)
 SEARCHGUI_ZIP  = expand("searchgui/{fname}_searchgui.zip", fname=Samples)
-PEPTIDESHAKER_MZID = expand("peptideshaker/{fname}_peptideshaker.mzid", fname=Samples)
+PEPTIDESHAKER_MZID = expand("{fname}/{sname}_peptideshaker.mzid", fname=PEPTIDESHAKER_OUTPUT, sname=Samples)
 # FINAL_MZID = expand("{fname}/{fname}_final.mzid", fname=THERMOFOLD)
 # RPT_NAMES = [os.path.splitext(os.path.basename(f))[0] for f in Samples]
 PSM_RPT = expand("results/reports/proteins/{fname}_psm_report.txt", fname=Samples)
-PROTEIN_RPT = expand("results/reports/proteins/{fname}_protein_report.txt", fname=Samples)
-PEPTIDE_RPT = expand("results/reports/peptides/{fname}_peptide_report.txt", fname=Samples)
-PROCESSED_RPT = expand("PROCESSED_REPORTS_DIR/processed_{fname}_peptide_report.txt", fname=Samples)
+PROTEIN_RPT = expand("{fname}/{sname}_Default_Protein_Report.txt", fname=PEPTIDESHAKER_OUTPUT, sname=Samples)
+PEPTIDE_RPT = expand("{fname}/{sname}_Default_Peptide_Report.txt", fname=PEPTIDESHAKER_OUTPUT, sname=Samples)
+PROCESSED_RPT = expand("PROCESSED_REPORTS_DIR/processed_{sname}_peptide_report.txt", sname=Samples)
 
 # tools
 THERMO_EXE = os.path.join(BINDIR, "ThermoRawFileParser/ThermoRawFileParser.exe")
@@ -86,7 +86,7 @@ PEPTIDESHAKER_JAR = os.path.join(BINDIR, "PeptideShaker-2.0.33/PeptideShaker-2.0
 
 #output files
 CLUSTER_REPORT = os.path.join(CONTIG_INFO_FILE_DIR, "databases/cluster_report.txt")
-PROTEINS_DECOY = os.path.join(TMPDIR, "proteins_decoy_generated_check.txt")
+PROTEINS_DECOY = os.path.join(CONFIGDIR, "proteins_decoy_generated_check.txt")
 SAMPLEINFO_FILE_FINAL = os.path.join(CONTIG_INFO_FILE_DIR, "sample_info_final.csv")
 GFF_FILE_H = expand("PROCESSED_REPORTS_DIR/results/{aname}_high_confidence.gff",aname=Assemblies)
 GFF_FILE_L = expand("PROCESSED_REPORTS_DIR/results/{aname}_low_confidence.gff",aname=Assemblies)
@@ -98,13 +98,14 @@ GFF_FILE_L = expand("PROCESSED_REPORTS_DIR/results/{aname}_low_confidence.gff",a
 rule ALL:
     input:
         # dynamic(expand("assemblies/databases/unique_{iname}_cluster_set_{{PART}}.faa", iname=STUDY)),
-        database=[OUTPUT_FILE, PROTEIN_FILE, SAMPLEINFO_FILE_FINAL, CLUSTER_REPORT]
-        # thermo=[THERMORAW, THERMOMGF],
-        # searchgui=[PROTEINS_DECOY, SEARCHGUI_PAR, SEARCHGUI_ZIP],
+        # database=[OUTPUT_FILE, PROTEIN_FILE, SAMPLEINFO_FILE_FINAL, CLUSTER_REPORT]
+        # thermo=[THERMORAW, THERMOMGF]
+        # searchgui=[PROTEINS_DECOY, SEARCHGUI_PAR, SEARCHGUI_ZIP]
+        searchgui=PROTEINS_DECOY
         # report=[PROTEIN_RPT, PEPTIDE_RPT],
         # peptideshaker=PEPTIDESHAKER_MZID,
-        # # assembly_list=ASSEMBLY_NAMES,
-        # processed=PROCESSED_RPT,
+        # # # assembly_list=ASSEMBLY_NAMES,
+        # processed=PROCESSED_RPT
         # gff_files=[GFF_FILE_H, GFF_FILE_L]
 
 
@@ -132,9 +133,9 @@ rule generate_db:
         "DB_generate: {input.sample_metadata} -> {output.sample_info_final}"
     run:
         if params.study in config["parameters"]["Study"]:
-            shell("python metagenomics_db/main.py -s {params.study} -v {params.ver} -o {params.output_dir} -m {input.sample_metadata} -b {params.db_size} ")
+            shell("python metagenomics_db/main.py -s {params.study} -v {params.ver} -o {params.output_dir} -m {input.sample_metadata} -b {params.db_size} &> {log}")
         elif params.study in config["parameters"]["Input_dir"]:
-            shell("python metagenomics_db/main.py -i {params.study} -v {params.ver} -o {params.output_dir} -m {input.sample_metadata} -b {params.db_size} ")
+            shell("python metagenomics_db/main.py -i {params.study} -v {params.ver} -o {params.output_dir} -m {input.sample_metadata} -b {params.db_size} &> {log}")
 
 
 #########################
@@ -157,7 +158,7 @@ rule thermorawfileparser:
         exe=THERMO_EXE,
         info=SAMPLEINFO_FILE
     output:
-        raw=THERMORAW,
+        # raw=THERMORAW,
         mgf=THERMOMGF
     params:
         folder=THERMOFOLD
@@ -187,7 +188,7 @@ rule searchgui_decoy:
     log:
         expand("logs/{fname}_SearchGUI_decoy.log",fname=PRIDE_ID)
     params:
-        tmpdir = TMPDIR
+        t_dir = TMPDIR
         # logdir = "logs/SearchGUI_decoy"
     threads: 1
     conda:
@@ -196,7 +197,7 @@ rule searchgui_decoy:
         "SearchGUI decoy: {input.cluster_rpt} -> {output}"
     shell:
         "python generating_decoy.py -jar {input.jar} -info {input.info} "
-        "-human {input.human_db} -crap {input.crap_db} -tmp {params.tmpdir}"
+        "-human {input.human_db} -crap {input.crap_db} -tmp $(dirname {output})"
     # shell:
     #     "for protein in {input.faa}; do cat {input.human_db} {input.crap_db} >> $protein; "
     #     "java -cp {input.jar} eu.isas.searchgui.cmd.FastaCLI -in $protein "
@@ -230,15 +231,15 @@ rule searchgui_search:
         flag=PROTEINS_DECOY,
         # mgf=THERMOMGF,
         jar=SEARCHGUI_JAR,
-        info=SAMPLEINFO_FILE
+        info=SAMPLEINFO_FILE_FINAL
     output:
         SEARCHGUI_ZIP
     # log:
         # expand("logs/{fname}_SearchGUI_search.log",fname=PRIDE_ID)
-    params:
-        # name=expand("{fname}_searchgui", fname=PRIDE_ID),
-        # tmpdir = TMPDIR,
-        logdir = "logs/SearchGUI_search"
+    # params:
+    #     # name=expand("{fname}_searchgui", fname=PRIDE_ID),
+    #     # tmpdir = TMPDIR,
+    #     logdir = "logs/SearchGUI_search"
     threads: 10
     conda:
         os.path.join(ENVDIR, "IMP_proteomics.yaml")
@@ -282,7 +283,7 @@ rule peptideshaker_load:
         peptide=PEPTIDE_RPT,
         mzid=PEPTIDESHAKER_MZID
     params:
-        outputdir=PEPTIDERSHAKER_OUTPUT,
+        outputdir=PEPTIDESHAKER_OUTPUT,
         fn=FIRST_NAME,
         ln=LAST_NAME,
         ce=EMAIL,
@@ -332,7 +333,7 @@ rule post_processing:
     message:
         "Post-processing: {input} -> {output}"
     shell:
-        "python post_report_generation/main.py -s {input} -p {params} &> {log}"
+        "python post_report_generation/main.py -s {input.info} -p {params} &> {log}"
 
 #########################
 # Gff format file
