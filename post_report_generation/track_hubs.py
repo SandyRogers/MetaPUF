@@ -111,6 +111,22 @@ def apply_SC(peptides, SC_df):
     return pd.Series([get_spectrum_counting(ppg, SC_df) for ppg in peptides['Processed Protein Groups']])
 
 
+def get_positions(positions):
+    processed_positions = ""
+    positions = positions.replace(' ', '').split(';')
+    for p in positions:
+        if p.endswith(')'):
+            processed_positions += p.split('(')[1][0:-1]
+        else:
+            processed_positions += p
+        processed_positions += ";"
+
+    if processed_positions.endswith(";"):
+        processed_positions = processed_positions[0:-1]
+
+    return processed_positions
+
+
 def get_track_beds(peptide_report, protein_report, save_file_name, pxd_id):
     peptides = pd.read_csv(peptide_report, sep='\t')[['Protein(s)','Protein Group(s)','Sequence','Position','#Validated PSMs']]
     peptides = peptides[peptides['#Validated PSMs'] > 0]
@@ -118,6 +134,7 @@ def get_track_beds(peptide_report, protein_report, save_file_name, pxd_id):
     peptides['Processed Protein Groups'] = peptides['Protein Group(s)'].apply(remove_doubtful_protein_groups)
     peptides['Validated Protein Groups'] = peptides['Processed Protein Groups'].apply(count_validated_protein_groups)
     peptides = peptides[peptides['Validated Protein Groups'] > 0]
+    peptides['Processed Position'] = peptides['Position'].apply(get_positions)
     peptides = peptides.reset_index()
 
     SC_df = create_dict_for_spectrum_counting(protein_report)
@@ -126,7 +143,7 @@ def get_track_beds(peptide_report, protein_report, save_file_name, pxd_id):
 
     proteins = peptides['Protein(s)'].str.replace(' ', '').str.split(';')
     proteinGroups = peptides['Processed Protein Groups'].str.replace(' ', '').str.split(';')
-    positions = peptides['Position'].str.replace(' ', '').str.split(';')
+    positions = peptides['Processed Position'].str.replace(' ', '').str.split(';')
     sequences = peptides['Sequence']
     validated_psms = peptides['#Validated PSMs']
     validated_PG = peptides['Validated Protein Groups']

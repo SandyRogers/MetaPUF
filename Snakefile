@@ -74,9 +74,9 @@ PEPTIDESHAKER_MZID = expand("{fname}/{sname}_peptideshaker.mzid", fname=PEPTIDES
 # FINAL_MZID = expand("{fname}/{fname}_final.mzid", fname=THERMOFOLD)
 # RPT_NAMES = [os.path.splitext(os.path.basename(f))[0] for f in Samples]
 PSM_RPT = expand("results/reports/proteins/{fname}_psm_report.txt", fname=Samples)
-PROTEIN_RPT = expand("{fname}/{sname}_Default_Protein_Report.txt", fname=PEPTIDESHAKER_OUTPUT, sname=Samples)
-PEPTIDE_RPT = expand("{fname}/{sname}_Default_Peptide_Report.txt", fname=PEPTIDESHAKER_OUTPUT, sname=Samples)
-PROCESSED_RPT = expand("PROCESSED_REPORTS_DIR/processed_{sname}_peptide_report.txt", sname=Samples)
+PROTEIN_RPT = expand("{fname}/peptideshaker_{sname}_1_Default_Protein_Report.txt", fname=PEPTIDESHAKER_OUTPUT, sname=Samples)
+PEPTIDE_RPT = expand("{fname}/peptideshaker_{sname}_1_Default_Peptide_Report.txt", fname=PEPTIDESHAKER_OUTPUT, sname=Samples)
+PROCESSED_RPT = expand("{fname}/processed_{sname}_peptide_report.csv", fname=PROCESSED_REPORTS_DIR, sname=Samples)
 
 # tools
 THERMO_EXE = os.path.join(BINDIR, "ThermoRawFileParser/ThermoRawFileParser.exe")
@@ -88,8 +88,7 @@ PEPTIDESHAKER_JAR = os.path.join(BINDIR, "PeptideShaker-2.0.33/PeptideShaker-2.0
 CLUSTER_REPORT = os.path.join(CONTIG_INFO_FILE_DIR, "databases/cluster_report.txt")
 PROTEINS_DECOY = os.path.join(CONFIGDIR, "proteins_decoy_generated_check.txt")
 SAMPLEINFO_FILE_FINAL = os.path.join(CONTIG_INFO_FILE_DIR, "sample_info_final.csv")
-GFF_FILE_H = expand("PROCESSED_REPORTS_DIR/results/{aname}_high_confidence.gff",aname=Assemblies)
-GFF_FILE_L = expand("PROCESSED_REPORTS_DIR/results/{aname}_low_confidence.gff",aname=Assemblies)
+GFF_FILE = expand("{fname}/results/{aname}_expressed_proteins.csv", fname=PROCESSED_REPORTS_DIR, aname=Assemblies)
 
 ##################################################
 # RULES
@@ -98,15 +97,15 @@ GFF_FILE_L = expand("PROCESSED_REPORTS_DIR/results/{aname}_low_confidence.gff",a
 rule ALL:
     input:
         # dynamic(expand("assemblies/databases/unique_{iname}_cluster_set_{{PART}}.faa", iname=STUDY)),
-        # database=[OUTPUT_FILE, PROTEIN_FILE, SAMPLEINFO_FILE_FINAL, CLUSTER_REPORT]
-        # thermo=[THERMORAW, THERMOMGF]
-        # searchgui=[PROTEINS_DECOY, SEARCHGUI_PAR, SEARCHGUI_ZIP]
-        searchgui=PROTEINS_DECOY
-        # report=[PROTEIN_RPT, PEPTIDE_RPT],
-        # peptideshaker=PEPTIDESHAKER_MZID,
-        # # # assembly_list=ASSEMBLY_NAMES,
-        # processed=PROCESSED_RPT
-        # gff_files=[GFF_FILE_H, GFF_FILE_L]
+        database=[OUTPUT_FILE, PROTEIN_FILE, SAMPLEINFO_FILE_FINAL, CLUSTER_REPORT],
+        thermo=THERMOMGF,
+        searchgui=[PROTEINS_DECOY, SEARCHGUI_PAR, SEARCHGUI_ZIP],
+        # searchgui=PROTEINS_DECOY,
+        report=[PROTEIN_RPT, PEPTIDE_RPT],
+        peptideshaker=PEPTIDESHAKER_MZID,
+        # # assembly_list=ASSEMBLY_NAMES,
+        processed=PROCESSED_RPT,
+        gff_files=GFF_FILE
 
 
 
@@ -229,7 +228,7 @@ rule searchgui_search:
     input:
         par=SEARCHGUI_PAR,
         flag=PROTEINS_DECOY,
-        # mgf=THERMOMGF,
+        mgf=THERMOMGF,
         jar=SEARCHGUI_JAR,
         info=SAMPLEINFO_FILE_FINAL
     output:
@@ -338,23 +337,26 @@ rule post_processing:
 #########################
 # Gff format file
 #########################
-if  config["parameters"]["Study"]!='':
-    rule gff_format_file:
-        input:
-            metap_sample_info=SAMPLEINFO_FILE_FINAL,
-            rpt=PROCESSED_RPT
-        output:
-            gff_file_high_confidence=GFF_FILE_H,
-            gff_file_low_confidence=GFF_FILE_L
-        params:
-            reports_dir=PROCESSED_REPORTS_DIR,
-            metag_dir=CONTIG_INFO_FILE_DIR,
-            pride_id=PRIDE_ID
-        threads: 1
-        message:
-            "Generating GFF format file: {input.metap_sample_info} -> {output.gff_file_high_confidence}"
-        shell:
-            "python gff_generation/main.py -s {input.metap_sample_info} -r {params.reports_dir} "
-            "-m {params.metag_dir} -p {params.pride_id} "
-else:
-    sys.exit()
+rule gff_format_file:
+    input:
+        metap_sample_info=SAMPLEINFO_FILE_FINAL,
+        rpt=PROCESSED_RPT
+    #reports_dir=PROCESSED_REPORTS_DIR,
+    #metag_dir=CONTIG_INFO_FILE_DIR,
+    output:
+        gff_file=GFF_FILE
+    params:
+        study=STUDY if config["parameters"]["Study"] else config["parameters"]["Input_dir"],
+        pride_id=PRIDE_ID,
+        reports_dir=PROCESSED_REPORTS_DIR,
+        metag_dir=CONTIG_INFO_FILE_DIR
+    log:
+        expand("logs/{iname}_gff_generate.log",iname=STUDY)
+    threads: 1
+    message:
+        "Generating GFF format file: {input.metap_sample_info} -> {log}"
+    run:
+        if params.study in config["parameters"]["Study"]:
+            shell("python gff_generation/main.py -s {params.study} -i {input.metap_sample_info} -r {params.reports_dir} -m {params.metag_dir} -p {params.pride_id} ")
+        elif params.study in config["parameters"]["Input_dir"]:
+            shell("python gff_generation/main.py -d {params.study} -i {input.metap_sample_info} -r {params.reports_dir} -m {params.metag_dir} -p {params.pride_id} ")

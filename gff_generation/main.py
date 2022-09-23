@@ -38,8 +38,18 @@ def main():  # noqa: C901
     parser = ArgumentParser(
         description="Aggregate information from metaproteomics and metagenomics about the expressed proteins and generate GFF format files for visualisation"
     )
+    """
+    The user can enter their own data using --input_dir option
+    or
+    select --study to analyse study published on MGnify website
+    """
+
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("-s","--study",type=str,help="Secondary study accession of the assembled study in MGnify starting with ERP/SRP/DRP ")
+    group.add_argument("-d", "--input_dir", type=dir_path,help="full path of the study folder containing protein files ")
+
     parser.add_argument(
-        "-s","--sample_info",
+        "-i","--sample_info",
         type=str,
         required=True,
         help="Absolute path of the sample metadata file",
@@ -85,12 +95,15 @@ def main():  # noqa: C901
         assembly_subset_of_proteins=pd.merge(unique_proteins, temp_assembly, on='digest', how='inner')
         assembly_expressed_proteins=assembly_subset_of_proteins.merge(csv_merged, left_on='digest', right_on='Protein',how='inner')
         assembly_expressed_proteins.to_csv(os.path.join(results_folder,assembly+"_expressed_proteins.csv"))
-        expressed_proteins=list(set(assembly_expressed_proteins['digest']))
-        attributes_file_h,attributes_file_l =gb.protein_report_processing(assembly_expressed_proteins,expressed_proteins,args.pride_id)
-        if len(attributes_file_h)>=1:
-            gb.gff_generation_high(args.reports_dir,attributes_file_h, assembly, results_folder)
-        if len(attributes_file_l)>=1:
-            gb.gff_generation_low(attributes_file_l, assembly, results_folder)
+        if args.study:
+            expressed_proteins=list(set(assembly_expressed_proteins['digest']))
+            attributes_file_h,attributes_file_l =gb.protein_report_processing(assembly_expressed_proteins,expressed_proteins,args.pride_id)
+            if len(attributes_file_h)>=1:
+                gb.gff_generation_high(args.reports_dir,attributes_file_h, assembly, results_folder)
+            if len(attributes_file_l)>=1:
+                gb.gff_generation_low(attributes_file_l, assembly, results_folder)
+        elif args.input_dir:
+            continue
 
     logging.info("Completed")
     logging.info("Runtime is {} seconds".format(time.time() - starttime))

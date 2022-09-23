@@ -52,7 +52,7 @@ def main():
     for sample in samples:
         th.get_track_beds('peptideshaker/'+sample+'_Default_Peptide_Report.txt',
                         'peptideshaker/'+sample+'_Default_Protein_Report.txt',
-                        'PROCESSED_REPORTS_DIR/processed_'+sample+'_peptide_report.csv',
+                        'Processed_Peptide_Reports/processed_'+sample+'_peptide_report.csv',
                         args.pride_id)
 
 
