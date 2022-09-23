@@ -1,4 +1,5 @@
 import os
+import sys
 import pandas as pd
 
 ##################################################
@@ -40,16 +41,15 @@ PRIDE_ID    = os.environ.get("PRIDE_ID", config["parameters"]["Pride_id"])
 VERSION     = os.environ.get("VERSION", config["parameters"]["Version"])
 DB_SIZE     = os.environ.get("DB_SIZE", config["parameters"]["Db_size"])
 METADATA    = os.environ.get("METADATA", config["raws"]["Metadata"])
-# I_PROTEINS = os.environ.get("PROTEINS", config["parameters"]["Proteins"])
 SEARCHGUI_OUTPUT = os.environ.get("SEARCHGUI_OUTPUT", config["output"]["searchgui_folder"])
 PEPTIDESHAKER_OUTPUT = os.environ.get("PEPTIDESHAKER_OUTPUT", config["output"]["peptideshaker_folder"])
+
 
 ##################################################
 # WORKDIR
 ##################################################
 workdir:
-    WORKDIR
-
+    OUTPUTDIR
 
 
 #input files
@@ -63,11 +63,12 @@ RawFileNames    = (sample_raw['Sample']+'/'+sample_raw['filename']).to_list()
 CRAP_FASTA      = os.path.join(RESOURCEDIR, "crap_db.fa")
 HUMAN_FASTA     = os.path.join(RESOURCEDIR, "human_db.fa")
 
+
 # data (output from one rule being used as input for another))
 OUTPUT_FILE = expand("assemblies/{aname}_contig_info.txt", aname=Assemblies)
 PROTEIN_FILE = expand("assemblies/{aname}.faa.gz", aname=Assemblies)
 THERMORAW = expand("{iname}/{bname}.raw", iname=THERMOFOLD, bname=RawFileNames)
-THERMOMGF = expand("{iname}/{bname}.mgf", iname=THERMOFOLD, bname=RawFileNames)
+THERMOMGF = expand("{iname}/{bname}.mzML", iname=THERMOFOLD, bname=RawFileNames)
 SEARCHGUI_PAR  = expand("searchgui/{fname}_searchgui.par", fname=PRIDE_ID)
 SEARCHGUI_ZIP  = expand("searchgui/{fname}_searchgui.zip", fname=Samples)
 PEPTIDESHAKER_MZID = expand("{fname}/{sname}_peptideshaker.mzid", fname=PEPTIDESHAKER_OUTPUT, sname=Samples)
@@ -77,6 +78,7 @@ PSM_RPT = expand("results/reports/proteins/{fname}_psm_report.txt", fname=Sample
 PROTEIN_RPT = expand("{fname}/peptideshaker_{sname}_1_Default_Protein_Report.txt", fname=PEPTIDESHAKER_OUTPUT, sname=Samples)
 PEPTIDE_RPT = expand("{fname}/peptideshaker_{sname}_1_Default_Peptide_Report.txt", fname=PEPTIDESHAKER_OUTPUT, sname=Samples)
 PROCESSED_RPT = expand("{fname}/processed_{sname}_peptide_report.csv", fname=PROCESSED_REPORTS_DIR, sname=Samples)
+
 
 # tools
 THERMO_EXE = os.path.join(BINDIR, "ThermoRawFileParser/ThermoRawFileParser.exe")
@@ -89,6 +91,7 @@ CLUSTER_REPORT = os.path.join(CONTIG_INFO_FILE_DIR, "databases/cluster_report.tx
 PROTEINS_DECOY = os.path.join(CONFIGDIR, "proteins_decoy_generated_check.txt")
 SAMPLEINFO_FILE_FINAL = os.path.join(CONTIG_INFO_FILE_DIR, "sample_info_final.csv")
 GFF_FILE = expand("{fname}/results/{aname}_expressed_proteins.csv", fname=PROCESSED_REPORTS_DIR, aname=Assemblies)
+
 
 ##################################################
 # RULES
@@ -141,17 +144,6 @@ rule generate_db:
 # ThermoRawFileParser
 #########################
 # https://github.com/compomics/ThermoRawFileParser
-# rule fetch_raw_files:
-#     input:
-#         RawURLs
-#     output:
-#         THERMORAW
-#     log:
-#         expand("logs/{fname}_fetch_raw_files.log",fname=PRIDE_ID)
-#     shell:
-#         "wget -P input/Raw -i {input}"
-
-
 rule thermorawfileparser:
     input:
         exe=THERMO_EXE,
@@ -209,11 +201,11 @@ rule searchgui_config:
     output:
         SEARCHGUI_PAR
     log:
-        expand("logs/{fname}_SearchGUI_params.log",fname=PRIDE_ID)
+        expand("logs/{fname}_SearchGUI_params.log",fname=THERMOFOLD)
     params:
         params = SEARCHGUI_PAR_PARAMS,
-        tmpdir = TMPDIR
-        # logdir = "logs/SearchGUI_params"
+        tmpdir = TMPDIR,
+        logdir = "logs/SearchGUI_params"
     threads: 1
     conda:
         os.path.join(ENVDIR, "IMP_proteomics.yaml")
@@ -221,7 +213,8 @@ rule searchgui_config:
         "SearchGUI parameters: {input} -> {output}"
     shell:
         "java -cp {input.jar} eu.isas.searchgui.cmd.IdentificationParametersCLI -out {output} "
-        "{params.params} -temp_folder {params.tmpdir} &> {log}"
+        "{params.params} -temp_folder {params.tmpdir} -log {params.logdir} &> {log}"
+
 
 
 rule searchgui_search:
@@ -233,7 +226,7 @@ rule searchgui_search:
         info=SAMPLEINFO_FILE_FINAL
     output:
         SEARCHGUI_ZIP
-    # log:
+    log:
         # expand("logs/{fname}_SearchGUI_search.log",fname=PRIDE_ID)
     # params:
     #     # name=expand("{fname}_searchgui", fname=PRIDE_ID),
@@ -243,29 +236,28 @@ rule searchgui_search:
     conda:
         os.path.join(ENVDIR, "IMP_proteomics.yaml")
     message:
-        "SearchGUI search: {input.flag} -> {output}"
+        "SearchGUI search: {input.par}, {input.mgf} -> {output}"
     shell:
         "python searchgui_search.py -s -jar {input.jar} -in {input.info} "
         "-out $(dirname {output[0]}) -par {input.par}"
-    # shell:
-    #     """
-    #     java -cp {input.jar} eu.isas.searchgui.cmd.SearchCLI \
-    #         -spectrum_files $(dirname {input.mgf[0]}) \
-    #         -fasta_file {input.faa} \
-    #         -output_folder $(dirname {output}) \
-    #         -id_params {input.par} \
-    #         -xtandem 1 \
-    #         -msgf 1 \
-    #         -comet 0 \
-    #         -andromeda 0 \
-    #         -threads {threads} \
-    #         -output_default_name {params.name} \
-    #         -output_option 0 \
-    #         -output_data 1 \
-    #         -output_date 0 \
-    #         -log {params.logdir} \
-    #         &> {log} && touch {output}
-    #     """
+        #"""
+        #java -cp {input.jar} eu.isas.searchgui.cmd.SearchCLI \
+        #    -spectrum_files $(dirname {input.mgf[0]}) \
+        #    -fasta_file {input.faa} \
+        #    -output_folder $(dirname {output}) \
+        #    -id_params {input.par} \
+        #    -xtandem 1 \
+        #    -msgf 1 \
+        #    -comet 0 \
+        #    -andromeda 0 \
+        #    -threads {threads} \
+        #    -output_default_name {params.name} \
+        #    -output_option 0 \
+        #    -output_data 1 \
+        #    -output_date 0 \
+        #    -log {params.logdir} \
+        #    &> {log} && touch {output}
+        #"""
 
 
 #########################
@@ -274,7 +266,7 @@ rule searchgui_search:
 # http://compomics.github.io/projects/peptide-shaker
 rule peptideshaker_load:
     input:
-        searchgui=SEARCHGUI_ZIP,
+        #searchgui=SEARCHGUI_ZIP,
         jar=PEPTIDESHAKER_JAR,
         info=SAMPLEINFO_FILE
     output:
@@ -296,43 +288,37 @@ rule peptideshaker_load:
     conda:
         os.path.join(ENVDIR, "IMP_proteomics.yaml")
     message:
-        "PeptideShaker load SearchGUI results: {input.info} -> {output.mzid}, {output.protein}, {output.peptide}"
+        "PeptideShaker load SearchGUI results: {input.searchgui} -> {output.mzid}, {output.protein}, {output.peptide}"
     shell:
         "python searchgui_search.py -p -jar {input.jar} -in {input.info} "
         "-out {params.outputdir} -fn {params.fn} -ln {params.ln} -ce {params.ce} -ca {params.ca} "
-        "-on {params.on} -oe {params.oe} -oa {params.oa}"
-    # shell:
-    #     "for search in {input.searchgui}; do java -cp {input.jar} eu.isas.peptideshaker.cmd.PeptideShakerCLI "
-    #     "-reference 'peptideshaker_peptideshaker_1' "
-    #     "-identification_files $search "
-    #     "-out_reports $(dirname {output.protein[0]}) -reports 6,9 "
-    #     "-report_prefix $(cut -d'_' -f1 <<<${search##*/}) "
-    #     "-output_file {output.mzid[0]} -contact_first_name 'Shengbo' -contact_last_name 'Wang' "
-    #     "-contact_email 'shengbo_wang@ebi.ac.uk' -contact_address 'EBI' -organization_name 'EBI' "
-    #     "-organization_email 'test@ebi.ac.uk' -organization_address 'Cambridge'; "
-    #     "-threads {threads} &> {log}; done"
-
-
+        #"java -cp {input.jar} eu.isas.peptideshaker.cmd.PeptideShakerCLI "
+        #"-reference 'peptideshaker_peptideshaker_1' "
+        #"-identification_files {input.searchgui} "
+        #"-out_reports $(dirname {output.protein}) -reports 6,9 "
+        #"-output_file {output.mzid} -contact_first_name 'Shengbo' -contact_last_name 'Wang' "
+        #"-contact_email 'shengbo_wang@ebi.ac.uk' -contact_address 'EBI' -organization_name 'EBI' "
+        #"-organization_email 'test@ebi.ac.uk' -organization_address 'Cambridge' "
+        #"-threads {threads} &> {log}"
 
 ########################
 # Generate post processing reports
 ########################
-rule post_processing:
-    input:
-        info=SAMPLEINFO_FILE,
-        protein=PROTEIN_RPT,
-        peptide=PEPTIDE_RPT
-    output:
-        PROCESSED_RPT
-    params:
-        PRIDE_ID
-    log:
-        expand("logs/{fname}_post_processing.log", fname=PRIDE_ID)
-    threads: 1
-    message:
-        "Post-processing: {input} -> {output}"
-    shell:
-        "python post_report_generation/main.py -s {input.info} -p {params} &> {log}"
+#rule post_processing:
+#    input:
+#        SAMPLEINFO_FILE
+#    output:
+#        PROCESSED_RPT
+#   params:
+#        PRIDE_ID
+#   log:
+#        expand("logs/{fname}_post_processing.log", fname=PRIDE_ID)
+#   threads: 1
+#   message:
+#       "Post-processing: {input} -> {output}"
+#   shell:
+#       "python post_report_generation/main.py -s {input} -p {params} &> {log}"
+
 
 #########################
 # Gff format file
