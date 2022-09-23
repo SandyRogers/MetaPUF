@@ -81,7 +81,7 @@ Sample  | PRIDE Accession  | Raw file  | Raw file URLs  | Sample Accession  | As
 --|---|---|---|---|--
  S6 |  PXD005780 | S6.raw | https://ftp.pride.ebi.ac.uk/pride/data/archive/2017/07/PXD005780/S6.raw  | ERS1509315  |  ERZ1669330
 
-This workflow looks for this file in the config directory. You don't need to provide the `RIDE Accession` number and `Raw file URLs`if you have the data locally, and just leave the column as blank, however the header is still needed.
+This workflow looks for this file in the config directory. You don't need to provide the `PRIDE Accession` number and `Raw file URLs` if you have the data locally, and just leave the column as blank, however the header is still needed.
 
 ## **Quick start**
 

@@ -80,7 +80,7 @@ def main():  # noqa: C901
 
     starttime = time.time()
     args = parser.parse_args()
-    sample_assembly_map = defaultdict(list)
+    sample_assembly_map = defaultdict(set)
 
     assembly_folder = os.path.join(args.output_dir, "assemblies")
     os.makedirs(assembly_folder, exist_ok=True)
@@ -107,10 +107,10 @@ def main():  # noqa: C901
                 continue
             else:
                 logging.info("The input files are not named with correct naming convention. Please check documentation for correct naming convention")
-            
+
     samples = pd.read_csv(args.metadata, sep=',')
     for idx,row in samples.iterrows():
-        sample_assembly_map[row['Sample Accession']].append(row['Assembly'])
+        sample_assembly_map[row['Sample Accession']].add(row['Assembly'])
     print(sample_assembly_map)
     for k, v in sample_assembly_map.items():
         sample_file = os.path.join(assembly_folder, k + ".fasta.gz")
