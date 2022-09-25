@@ -82,7 +82,7 @@ PROCESSED_RPT = expand("{fname}/processed_{sname}_peptide_report.csv", fname=PRO
 
 # tools
 THERMO_EXE = os.path.join(BINDIR, "ThermoRawFileParser/ThermoRawFileParser.exe")
-SEARCHGUI_JAR = os.path.join(BINDIR, "SearchGUI-4.0.41/SearchGUI-4.0.41.jar")
+SEARCHGUI_JAR = os.path.join(BINDIR, "SearchGUI-3.3.20/SearchGUI-3.3.20.jar")
 SEARCHGUI_PAR_PARAMS = " ".join(["-%s %s" % (k, "'%s'" % v if isinstance(v, str) else str(v)) for k, v in config["searchgui"]["par"].items()])
 PEPTIDESHAKER_JAR = os.path.join(BINDIR, "PeptideShaker-2.0.33/PeptideShaker-2.0.33.jar")
 
@@ -148,8 +148,6 @@ rule thermorawfileparser:
         mgf=THERMOMGF
     params:
         folder=THERMOFOLD
-    # log:
-        # expand("logs/{fname}_thermorawfileparser.log",fname=PRIDE_ID)
     threads: 1
     message:
         "ThermoRawFileParser: {input.info} -> {output.mgf}"
@@ -205,7 +203,7 @@ rule searchgui_search:
 # http://compomics.github.io/projects/peptide-shaker
 rule peptideshaker_load:
     input:
-        #searchgui=SEARCHGUI_ZIP,
+        searchgui=SEARCHGUI_ZIP,
         jar=PEPTIDESHAKER_JAR,
         info=SAMPLEINFO_FILE
     output:
@@ -227,7 +225,7 @@ rule peptideshaker_load:
     conda:
         os.path.join(ENVDIR, "IMP_proteomics.yaml")
     message:
-        "PeptideShaker load SearchGUI results: {input.searchgui} -> {output.mzid}, {output.protein}, {output.peptide}"
+        "PeptideShaker load SearchGUI results: {input.info} -> {output.mzid}, {output.protein}, {output.peptide}"
     shell:
         "python searchgui_search.py -p -jar {input.jar} -in {input.info} "
         "-out {params.outputdir} -fn {params.fn} -ln {params.ln} -ce {params.ce} -ca {params.ca} "
@@ -236,20 +234,22 @@ rule peptideshaker_load:
 ########################
 # Generate post processing reports
 ########################
-#rule post_processing:
-#    input:
-#        SAMPLEINFO_FILE
-#    output:
-#        PROCESSED_RPT
-#   params:
-#        PRIDE_ID
-#   log:
-#        expand("logs/{fname}_post_processing.log", fname=PRIDE_ID)
-#   threads: 1
-#   message:
-#       "Post-processing: {input} -> {output}"
-#   shell:
-#       "python post_report_generation/main.py -s {input} -p {params} &> {log}"
+rule post_processing:
+   input:
+       info=SAMPLEINFO_FILE,
+       protein=PROTEIN_RPT,
+       peptide=PEPTIDE_RPT
+   output:
+       PROCESSED_RPT
+  params:
+       PRIDE_ID
+  log:
+       expand("logs/{fname}_post_processing.log", fname=PRIDE_ID)
+  threads: 1
+  message:
+      "Post-processing: {input.info} -> {output}"
+  shell:
+      "python post_report_generation/main.py -s {input} -p {params} &> {log}"
 
 
 #########################
@@ -259,8 +259,6 @@ rule gff_format_file:
     input:
         metap_sample_info=SAMPLEINFO_FILE_FINAL,
         rpt=PROCESSED_RPT
-    #reports_dir=PROCESSED_REPORTS_DIR,
-    #metag_dir=CONTIG_INFO_FILE_DIR,
     output:
         gff_file=GFF_FILE
     params:
