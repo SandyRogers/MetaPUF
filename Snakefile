@@ -88,7 +88,7 @@ PEPTIDESHAKER_JAR = os.path.join(BINDIR, "PeptideShaker-2.0.33/PeptideShaker-2.0
 
 #output files
 CLUSTER_REPORT = os.path.join(CONTIG_INFO_FILE_DIR, "databases/cluster_report.txt")
-PROTEINS_DECOY = os.path.join(CONFIGDIR, "proteins_decoy_generated_check.txt")
+PROTEINS_CHECK = os.path.join(CONTIG_INFO_FILE_DIR, "databases/proteins_decoy_params_generated_check.txt")
 SAMPLEINFO_FILE_FINAL = os.path.join(CONTIG_INFO_FILE_DIR, "sample_info_final.csv")
 GFF_FILE = expand("{fname}/results/{aname}_expressed_proteins.csv", fname=PROCESSED_REPORTS_DIR, aname=Assemblies)
 
@@ -99,17 +99,13 @@ GFF_FILE = expand("{fname}/results/{aname}_expressed_proteins.csv", fname=PROCES
 ##################################################
 rule ALL:
     input:
-        # dynamic(expand("assemblies/databases/unique_{iname}_cluster_set_{{PART}}.faa", iname=STUDY)),
         database=[OUTPUT_FILE, PROTEIN_FILE, SAMPLEINFO_FILE_FINAL, CLUSTER_REPORT],
         thermo=THERMOMGF,
-        searchgui=[PROTEINS_DECOY, SEARCHGUI_PAR, SEARCHGUI_ZIP],
-        # searchgui=PROTEINS_DECOY,
+        searchgui=[PROTEINS_CHECK, SEARCHGUI_ZIP],
         report=[PROTEIN_RPT, PEPTIDE_RPT],
         peptideshaker=PEPTIDESHAKER_MZID,
-        # # assembly_list=ASSEMBLY_NAMES,
         processed=PROCESSED_RPT,
         gff_files=GFF_FILE
-
 
 
 #########################
@@ -149,7 +145,6 @@ rule thermorawfileparser:
         exe=THERMO_EXE,
         info=SAMPLEINFO_FILE
     output:
-        # raw=THERMORAW,
         mgf=THERMOMGF
     params:
         folder=THERMOFOLD
@@ -160,8 +155,6 @@ rule thermorawfileparser:
         "ThermoRawFileParser: {input.info} -> {output.mgf}"
     shell:
         "python coping_raw_files.py -exe {input.exe} -info {input.info} -out {params.folder}"
-    # shell:
-    #     "mono {input.exe} -d=$(dirname {input.raws[0]}) -o=$(dirname {output[0]}) -f=1 -m=0 &> {log}"
 
 
 #########################
@@ -175,12 +168,9 @@ rule searchgui_decoy:
         jar=SEARCHGUI_JAR,
         cluster_rpt=CLUSTER_REPORT
     output:
-        PROTEINS_DECOY
-    log:
-        expand("logs/{fname}_SearchGUI_decoy.log",fname=PRIDE_ID)
+        PROTEINS_CHECK
     params:
-        t_dir = TMPDIR
-        # logdir = "logs/SearchGUI_decoy"
+        params = SEARCHGUI_PAR_PARAMS
     threads: 1
     conda:
         os.path.join(ENVDIR, "IMP_proteomics.yaml")
@@ -188,76 +178,25 @@ rule searchgui_decoy:
         "SearchGUI decoy: {input.cluster_rpt} -> {output}"
     shell:
         "python generating_decoy.py -jar {input.jar} -info {input.info} "
-        "-human {input.human_db} -crap {input.crap_db} -tmp $(dirname {output})"
-    # shell:
-    #     "for protein in {input.faa}; do cat {input.human_db} {input.crap_db} >> $protein; "
-    #     "java -cp {input.jar} eu.isas.searchgui.cmd.FastaCLI -in $protein "
-    #     "-decoy -temp_folder {params.tmpdir} -log {params.logdir} &> {log}; done "
-
-
-rule searchgui_config:
-    input:
-        jar=SEARCHGUI_JAR
-    output:
-        SEARCHGUI_PAR
-    log:
-        expand("logs/{fname}_SearchGUI_params.log",fname=THERMOFOLD)
-    params:
-        params = SEARCHGUI_PAR_PARAMS,
-        tmpdir = TMPDIR,
-        logdir = "logs/SearchGUI_params"
-    threads: 1
-    conda:
-        os.path.join(ENVDIR, "IMP_proteomics.yaml")
-    message:
-        "SearchGUI parameters: {input} -> {output}"
-    shell:
-        "java -cp {input.jar} eu.isas.searchgui.cmd.IdentificationParametersCLI -out {output} "
-        "{params.params} -temp_folder {params.tmpdir} -log {params.logdir} &> {log}"
-
+        "-human {input.human_db} -crap {input.crap_db} -p {params.params}"
 
 
 rule searchgui_search:
     input:
-        par=SEARCHGUI_PAR,
-        flag=PROTEINS_DECOY,
+        flag=PROTEINS_CHECK,
         mgf=THERMOMGF,
         jar=SEARCHGUI_JAR,
         info=SAMPLEINFO_FILE_FINAL
     output:
         SEARCHGUI_ZIP
-    log:
-        # expand("logs/{fname}_SearchGUI_search.log",fname=PRIDE_ID)
-    # params:
-    #     # name=expand("{fname}_searchgui", fname=PRIDE_ID),
-    #     # tmpdir = TMPDIR,
-    #     logdir = "logs/SearchGUI_search"
     threads: 10
     conda:
         os.path.join(ENVDIR, "IMP_proteomics.yaml")
     message:
-        "SearchGUI search: {input.par}, {input.mgf} -> {output}"
+        "SearchGUI search: {input.mgf} -> {output}"
     shell:
         "python searchgui_search.py -s -jar {input.jar} -in {input.info} "
-        "-out $(dirname {output[0]}) -par {input.par}"
-        #"""
-        #java -cp {input.jar} eu.isas.searchgui.cmd.SearchCLI \
-        #    -spectrum_files $(dirname {input.mgf[0]}) \
-        #    -fasta_file {input.faa} \
-        #    -output_folder $(dirname {output}) \
-        #    -id_params {input.par} \
-        #    -xtandem 1 \
-        #    -msgf 1 \
-        #    -comet 0 \
-        #    -andromeda 0 \
-        #    -threads {threads} \
-        #    -output_default_name {params.name} \
-        #    -output_option 0 \
-        #    -output_data 1 \
-        #    -output_date 0 \
-        #    -log {params.logdir} \
-        #    &> {log} && touch {output}
-        #"""
+        "-out $(dirname {output[0]}) "
 
 
 #########################
@@ -292,14 +231,7 @@ rule peptideshaker_load:
     shell:
         "python searchgui_search.py -p -jar {input.jar} -in {input.info} "
         "-out {params.outputdir} -fn {params.fn} -ln {params.ln} -ce {params.ce} -ca {params.ca} "
-        #"java -cp {input.jar} eu.isas.peptideshaker.cmd.PeptideShakerCLI "
-        #"-reference 'peptideshaker_peptideshaker_1' "
-        #"-identification_files {input.searchgui} "
-        #"-out_reports $(dirname {output.protein}) -reports 6,9 "
-        #"-output_file {output.mzid} -contact_first_name 'Shengbo' -contact_last_name 'Wang' "
-        #"-contact_email 'shengbo_wang@ebi.ac.uk' -contact_address 'EBI' -organization_name 'EBI' "
-        #"-organization_email 'test@ebi.ac.uk' -organization_address 'Cambridge' "
-        #"-threads {threads} &> {log}"
+
 
 ########################
 # Generate post processing reports

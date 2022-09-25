@@ -43,13 +43,12 @@ def get_args():
     return args
 
 
-def searchgui_search(jar_file, input_file, output_folder, par_file):
+def searchgui_search(jar_file, input_file, output_folder):
     """
     run searchgui shell script within a loop based on the mapping sample information
     :input_file:    sample information file contains raw files, samples, mapped searching databases
     :jar_file:      the searchgui jar file
     :output_folder: output folder path for searchgui search results
-    :par_file:      the searchgui parameters file
     """
     sample_info = pd.read_csv(input_file, sep=',')
     samples = sample_info['Sample'].drop_duplicates().to_list()
@@ -57,14 +56,14 @@ def searchgui_search(jar_file, input_file, output_folder, par_file):
     for sample in samples:
         params = " -spectrum_files"
         params += " input/Raw/" + sample
-        params += " -fasta_file"
+        # params += " -fasta_file"
         fasta = sample_info.loc[sample_info['Sample'] == sample, 'Db_name'].iloc[0]
         fasta = fasta.split('.')[0]
-        params += " assemblies/databases/" + fasta + "_concatenated_target_decoy.fasta"
+        # params += " assemblies/databases/" + fasta + "_concatenated_target_decoy.fasta"
         params += " -output_folder"
         params += " " + output_folder
         params += " -id_params"
-        params += " " + par_file
+        params += " assemblies/databases/" + fasta + "_searchgui.par"
         params += " -xtandem 1 -msgf 1"
         params += " -output_default_name"
         params += " " + sample + "_searchgui"
@@ -77,7 +76,6 @@ def searchgui_search(jar_file, input_file, output_folder, par_file):
         commandline = "java -cp " + jar_file + " eu.isas.searchgui.cmd.SearchCLI"
         commandline += params
 
-        # print(commandline)
         subprocess.run(commandline, shell=True)
 
 
@@ -93,12 +91,10 @@ def peptideshaker_load(jar_file, input_file, output_folder, first_name, last_nam
     samples = sample_info['Sample'].drop_duplicates().to_list()
 
     for sample in samples:
-        # params = " -reference " + sample
         params = " -experiment 'peptideshaker' -sample " + sample + " -replicate 1 "
         params += " -identification_files searchgui/" + sample + "_searchgui.zip"
         params += " -out_reports " + output_folder
         params += " -reports 6,9"
-        # params += " -report_prefix " + sample + "_"
         params += " -output_file peptideshaker/" + sample + "_peptideshaker.mzid"
         params += " -contact_first_name '" + first_name + "'"
         params += " -contact_last_name '" + last_name + "'"
