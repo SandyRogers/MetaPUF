@@ -28,7 +28,7 @@ def get_args():
 
     return args
 
-# sample_info = pd.read_csv("config/sample_info.csv", sep=',')
+# sample_info = pd.read_csv("sample_info_final.csv", sep=',')
 def thermorawfileparser(exe_file, info_file, output_folder):
     """
     downloading raw file via FTP and convert them into peak list files based on the sample information
@@ -39,25 +39,32 @@ def thermorawfileparser(exe_file, info_file, output_folder):
     sample_info = pd.read_csv(info_file, sep=',')
     sample_info = sample_info[['Sample','Raw file','Raw file URLs']].drop_duplicates()
     RawURLs  = sample_info['Raw file URLs'].dropna().to_list()
-    RawFiles = sample_info['Raw file'].to_list()
-    samples  = sample_info['Sample'].to_list()
 
-    for i in range(len(samples)):
-        # check if the folder is already generated
-        folder = os.path.join(output_folder, samples[i])
-        commandline = "mkdir -p " + folder + ";"
+    if len(RawURLs) > 0:
+        samples = {k: g["Raw file URLs"].tolist() for k,g in sample_info.groupby("Sample")}
+        for sample in samples.keys():
+            # generate the folder if it is not there
+            folder = os.path.join(output_folder, sample)
+            commandline = "mkdir -p " + folder + ";"
+            # download the raw files if they are not provided locally.
+            for url in samples[sample]:
+                commandline += " wget -P " + folder + " -i " + url + ";"
 
-        # download the raw files if they are not provided locally.
-        if len(RawURLs) > 0:
-            commandline += " wget -P " + folder + " -i " + RawURLs[i] + ";"
+            commandline += " mono " + exe_file + " -d=" + folder + " -o=" + folder
+            # -f=1 means mzML format file
+            commandline += " -f=0 -m=0 &> logs/" + sample + "_thermorawfileparser.log"
+            subprocess.run(commandline, shell=True)
 
-        # convert raw file to mzML file
-        rawfile = os.path.join(folder, RawFiles[i])
-        commandline += " mono " + exe_file + " -i=" + rawfile + " -o=" + folder
-        # -f=1 means mzML format file
-        commandline += " -f=0 -m=0 &> logs/" + samples[i] + "_thermorawfileparser.log"
-        # print(commandline)
-        subprocess.run(commandline, shell=True)
+    else:
+        samples = {k: g["Raw file"].tolist() for k,g in sample_info.groupby("Sample")}
+        for sample in samples.keys():
+            # generate the folder if it is not there
+            folder = os.path.join(output_folder, sample)
+            commandline = "mkdir -p " + folder + ";"
+            commandline += " mono " + exe_file + " -d=" + folder + " -o=" + folder
+            # -f=1 means mzML format file
+            commandline += " -f=0 -m=0 &> logs/" + sample + "_thermorawfileparser.log"
+            subprocess.run(commandline, shell=True)
 
 
 def main():

@@ -27,7 +27,7 @@ def dir_path(string):
         raise NotADirectoryError(string)
 
 
-def main(): 
+def main():
     """
     Aggregate information from metaproteomics and metagenomics about the expressed proteins
     and generate processed peptide reports for gff file generation
@@ -40,6 +40,11 @@ def main():
         required=True,
         help="Absolute path of the sample metadata file",)
     parser.add_argument(
+        "-d","--dir",
+        type=str,
+        required=True,
+        help="output directory",)
+    parser.add_argument(
         "-p","--pride_id",
         type=str,
         required=True,
@@ -49,10 +54,12 @@ def main():
     sample_info=pd.read_csv(args.sample_info, sep=',')
     samples=list(set(sample_info['Sample'].to_list()))
 
+    commandline = "mkdir -p " + args.dir
+    subprocess.run(commandline, shell=True)
     for sample in samples:
-        th.get_track_beds('results/reports/peptides/'+sample+'_peptide_report.txt',
-                        'results/reports/proteins/'+sample+'_protein_report.txt',
-                        'results/reports/processed/processed_'+sample+'_peptide_report.csv',
+        th.get_track_beds('peptideshaker/'+sample+'_Default_Peptide_Report.txt',
+                        'peptideshaker/'+sample+'_Default_Protein_Report.txt',
+                        os.path.join(args.dir, 'processed_'+sample+'_peptide_report.csv'),
                         args.pride_id)
 
 

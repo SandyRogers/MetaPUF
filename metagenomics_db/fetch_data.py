@@ -23,6 +23,7 @@ import shutil
 from os import stat
 
 import pandas as pd
+pd.options.mode.chained_assignment = None  # default='warn'
 from Bio import SeqIO
 
 def check_study_accession(study_accession):
@@ -127,7 +128,7 @@ def build_db(study_acc, db_dir,assembly_dir,sample_df, cluster_dict):
         for assembly in assembly_list:
             for i in range(len(sample_df)):
                 if assembly==sample_df['Assembly'][i]:
-                    sample_df['Db_name'][i]=study_acc + "_cluster_set_" + str(group_no) + ".faa"
+                    sample_df['Db_name'][i]= "unique_" + study_acc + "_cluster_set_" + str(group_no) + ".faa"
     sample_df.to_csv(os.path.join(assembly_dir, "sample_info_final.csv"))
 
 

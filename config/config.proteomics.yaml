@@ -3,7 +3,7 @@ raws:
 
 parameters:
     Study: "ERP124921"
-    Input_dir: "./"
+    # Input_dir: "./"
     Proteins: "ERP021080"
     Pride_id: "PXD005780"
     Version: "5.0"
@@ -20,10 +20,10 @@ parameters:
 # sample: "sample"
 outputdir: "./"
 workdir: "./"
-tmp_dir: "tmp"
+tmpdir: "./tmp"
 output:
     searchgui_folder: "searchgui"
-    peptidershaker_folder: "peptidershaker"
+    peptideshaker_folder: "peptideshaker"
 thermo:
     url: "https://github.com/compomics/ThermoRawFileParser/releases/download/{version}/ThermoRawFileParser.zip"
     exe: "ThermoRawFileParser.exe"
