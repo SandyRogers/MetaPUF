@@ -15,7 +15,7 @@ def get_args():
                         help="the sample information file, where stores the mapping information for samples, databases and raw files")
     parser.add_argument('-out', '--output', dest='output_folder', help="the folder path for saving output files")
     parser.add_argument('-jar', '--javafile', dest='jar_file', help="the jar file")
-    parser.add_argument('-par', '--parameters', dest='par_file', help="the parameter file for searchgui script")
+    # parser.add_argument('-par', '--parameters', dest='par_file', help="the parameter file for searchgui script")
     parser.add_argument('-fn', '--firstname', dest='first_name', help="contact first name")
     parser.add_argument('-ln', '--lastname', dest='last_name', help="contact last name")
     parser.add_argument('-ce', '--contactemail', dest='email', help="contact email")
@@ -118,7 +118,7 @@ def main():
     args = get_args()
 
     if args.searchgui:
-        searchgui_search(args.jar_file, args.input_file, args.output_folder, args.par_file)
+        searchgui_search(args.jar_file, args.input_file, args.output_folder)
     elif args.peptideshaker:
         peptideshaker_load(args.jar_file, args.input_file, args.output_folder, args.first_name, args.last_name,
                             args.email, args.address, args.org_name, args.org_email, args.org_address)
