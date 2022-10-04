@@ -51,9 +51,9 @@ PEPTIDESHAKER_OUTPUT = os.environ.get("PEPTIDESHAKER_OUTPUT", config["output"]["
 workdir:
     OUTPUTDIR
 
-
 #input files
 SAMPLEINFO_FILE = os.path.join(CONFIGDIR, METADATA)
+CONFIG_FILE     = os.path.join(CONFIGDIR, "config.proteomics.yaml")
 sample_info     = pd.read_csv(SAMPLEINFO_FILE, sep=',')
 Assemblies      = sample_info['Assembly'].drop_duplicates().to_list()
 Samples         = sample_info['Sample'].drop_duplicates().to_list()
@@ -63,12 +63,11 @@ RawFileNames    = (sample_raw['Sample']+'/'+sample_raw['filename']).to_list()
 CRAP_FASTA      = os.path.join(RESOURCEDIR, "crap_db.fa")
 HUMAN_FASTA     = os.path.join(RESOURCEDIR, "human_db.fa")
 
-
 # data (output from one rule being used as input for another))
 OUTPUT_FILE = expand("assemblies/{aname}_contig_info.txt", aname=Assemblies)
 PROTEIN_FILE = expand("assemblies/{aname}.faa.gz", aname=Assemblies)
 THERMORAW = expand("{iname}/{bname}.raw", iname=THERMOFOLD, bname=RawFileNames)
-THERMOMGF = expand("{iname}/{bname}.mzML", iname=THERMOFOLD, bname=RawFileNames)
+THERMOMGF = expand("{iname}/{bname}.mgf", iname=THERMOFOLD, bname=RawFileNames)
 SEARCHGUI_PAR  = expand("searchgui/{fname}_searchgui.par", fname=PRIDE_ID)
 SEARCHGUI_ZIP  = expand("searchgui/{fname}_searchgui.zip", fname=Samples)
 PEPTIDESHAKER_MZID = expand("{fname}/{sname}_peptideshaker.mzid", fname=PEPTIDESHAKER_OUTPUT, sname=Samples)
@@ -79,19 +78,17 @@ PROTEIN_RPT = expand("{fname}/peptideshaker_{sname}_1_Default_Protein_Report.txt
 PEPTIDE_RPT = expand("{fname}/peptideshaker_{sname}_1_Default_Peptide_Report.txt", fname=PEPTIDESHAKER_OUTPUT, sname=Samples)
 PROCESSED_RPT = expand("{fname}/processed_{sname}_peptide_report.csv", fname=PROCESSED_REPORTS_DIR, sname=Samples)
 
-
 # tools
 THERMO_EXE = os.path.join(BINDIR, "ThermoRawFileParser/ThermoRawFileParser.exe")
-SEARCHGUI_JAR = os.path.join(BINDIR, "SearchGUI-4.0.41/SearchGUI-4.0.41.jar")
+SEARCHGUI_JAR = os.path.join(BINDIR, "SearchGUI-3.3.20/SearchGUI-3.3.20.jar")
 SEARCHGUI_PAR_PARAMS = " ".join(["-%s %s" % (k, "'%s'" % v if isinstance(v, str) else str(v)) for k, v in config["searchgui"]["par"].items()])
-PEPTIDESHAKER_JAR = os.path.join(BINDIR, "PeptideShaker-2.0.33/PeptideShaker-2.0.33.jar")
+PEPTIDESHAKER_JAR = os.path.join(BINDIR, "PeptideShaker-1.15.46/PeptideShaker-1.15.46.jar")
 
 #output files
 CLUSTER_REPORT = os.path.join(CONTIG_INFO_FILE_DIR, "databases/cluster_report.txt")
-PROTEINS_DECOY = os.path.join(CONFIGDIR, "proteins_decoy_generated_check.txt")
+PROTEINS_CHECK = os.path.join(CONTIG_INFO_FILE_DIR, "databases/proteins_decoy_params_generated_check.txt")
 SAMPLEINFO_FILE_FINAL = os.path.join(CONTIG_INFO_FILE_DIR, "sample_info_final.csv")
 GFF_FILE = expand("{fname}/results/{aname}_expressed_proteins.csv", fname=PROCESSED_REPORTS_DIR, aname=Assemblies)
-
 
 ##################################################
 # RULES
@@ -99,17 +96,13 @@ GFF_FILE = expand("{fname}/results/{aname}_expressed_proteins.csv", fname=PROCES
 ##################################################
 rule ALL:
     input:
-        # dynamic(expand("assemblies/databases/unique_{iname}_cluster_set_{{PART}}.faa", iname=STUDY)),
         database=[OUTPUT_FILE, PROTEIN_FILE, SAMPLEINFO_FILE_FINAL, CLUSTER_REPORT],
         thermo=THERMOMGF,
-        searchgui=[PROTEINS_DECOY, SEARCHGUI_PAR, SEARCHGUI_ZIP],
-        # searchgui=PROTEINS_DECOY,
+        searchgui=[PROTEINS_CHECK, SEARCHGUI_ZIP],
         report=[PROTEIN_RPT, PEPTIDE_RPT],
         peptideshaker=PEPTIDESHAKER_MZID,
-        # # assembly_list=ASSEMBLY_NAMES,
         processed=PROCESSED_RPT,
         gff_files=GFF_FILE
-
 
 
 #########################
@@ -149,19 +142,14 @@ rule thermorawfileparser:
         exe=THERMO_EXE,
         info=SAMPLEINFO_FILE
     output:
-        # raw=THERMORAW,
         mgf=THERMOMGF
     params:
         folder=THERMOFOLD
-    # log:
-        # expand("logs/{fname}_thermorawfileparser.log",fname=PRIDE_ID)
     threads: 1
     message:
         "ThermoRawFileParser: {input.info} -> {output.mgf}"
     shell:
         "python coping_raw_files.py -exe {input.exe} -info {input.info} -out {params.folder}"
-    # shell:
-    #     "mono {input.exe} -d=$(dirname {input.raws[0]}) -o=$(dirname {output[0]}) -f=1 -m=0 &> {log}"
 
 
 #########################
@@ -169,18 +157,14 @@ rule thermorawfileparser:
 #########################
 rule searchgui_decoy:
     input:
+        conf=CONFIG_FILE,
         info=SAMPLEINFO_FILE_FINAL,
         human_db=HUMAN_FASTA,
         crap_db=CRAP_FASTA,
         jar=SEARCHGUI_JAR,
         cluster_rpt=CLUSTER_REPORT
     output:
-        PROTEINS_DECOY
-    log:
-        expand("logs/{fname}_SearchGUI_decoy.log",fname=PRIDE_ID)
-    params:
-        t_dir = TMPDIR
-        # logdir = "logs/SearchGUI_decoy"
+        PROTEINS_CHECK
     threads: 1
     conda:
         os.path.join(ENVDIR, "IMP_proteomics.yaml")
@@ -188,76 +172,25 @@ rule searchgui_decoy:
         "SearchGUI decoy: {input.cluster_rpt} -> {output}"
     shell:
         "python generating_decoy.py -jar {input.jar} -info {input.info} "
-        "-human {input.human_db} -crap {input.crap_db} -tmp $(dirname {output})"
-    # shell:
-    #     "for protein in {input.faa}; do cat {input.human_db} {input.crap_db} >> $protein; "
-    #     "java -cp {input.jar} eu.isas.searchgui.cmd.FastaCLI -in $protein "
-    #     "-decoy -temp_folder {params.tmpdir} -log {params.logdir} &> {log}; done "
-
-
-rule searchgui_config:
-    input:
-        jar=SEARCHGUI_JAR
-    output:
-        SEARCHGUI_PAR
-    log:
-        expand("logs/{fname}_SearchGUI_params.log",fname=THERMOFOLD)
-    params:
-        params = SEARCHGUI_PAR_PARAMS,
-        tmpdir = TMPDIR,
-        logdir = "logs/SearchGUI_params"
-    threads: 1
-    conda:
-        os.path.join(ENVDIR, "IMP_proteomics.yaml")
-    message:
-        "SearchGUI parameters: {input} -> {output}"
-    shell:
-        "java -cp {input.jar} eu.isas.searchgui.cmd.IdentificationParametersCLI -out {output} "
-        "{params.params} -temp_folder {params.tmpdir} -log {params.logdir} &> {log}"
-
+        "-human {input.human_db} -crap {input.crap_db} -p {input.conf}"
 
 
 rule searchgui_search:
     input:
-        par=SEARCHGUI_PAR,
-        flag=PROTEINS_DECOY,
+        flag=PROTEINS_CHECK,
         mgf=THERMOMGF,
         jar=SEARCHGUI_JAR,
         info=SAMPLEINFO_FILE_FINAL
     output:
         SEARCHGUI_ZIP
-    log:
-        # expand("logs/{fname}_SearchGUI_search.log",fname=PRIDE_ID)
-    # params:
-    #     # name=expand("{fname}_searchgui", fname=PRIDE_ID),
-    #     # tmpdir = TMPDIR,
-    #     logdir = "logs/SearchGUI_search"
     threads: 10
     conda:
         os.path.join(ENVDIR, "IMP_proteomics.yaml")
     message:
-        "SearchGUI search: {input.par}, {input.mgf} -> {output}"
+        "SearchGUI search: {input.mgf} -> {output}"
     shell:
         "python searchgui_search.py -s -jar {input.jar} -in {input.info} "
-        "-out $(dirname {output[0]}) -par {input.par}"
-        #"""
-        #java -cp {input.jar} eu.isas.searchgui.cmd.SearchCLI \
-        #    -spectrum_files $(dirname {input.mgf[0]}) \
-        #    -fasta_file {input.faa} \
-        #    -output_folder $(dirname {output}) \
-        #    -id_params {input.par} \
-        #    -xtandem 1 \
-        #    -msgf 1 \
-        #    -comet 0 \
-        #    -andromeda 0 \
-        #    -threads {threads} \
-        #    -output_default_name {params.name} \
-        #    -output_option 0 \
-        #    -output_data 1 \
-        #    -output_date 0 \
-        #    -log {params.logdir} \
-        #    &> {log} && touch {output}
-        #"""
+        "-out $(dirname {output[0]}) "
 
 
 #########################
@@ -266,7 +199,7 @@ rule searchgui_search:
 # http://compomics.github.io/projects/peptide-shaker
 rule peptideshaker_load:
     input:
-        #searchgui=SEARCHGUI_ZIP,
+        searchgui=SEARCHGUI_ZIP,
         jar=PEPTIDESHAKER_JAR,
         info=SAMPLEINFO_FILE
     output:
@@ -288,36 +221,32 @@ rule peptideshaker_load:
     conda:
         os.path.join(ENVDIR, "IMP_proteomics.yaml")
     message:
-        "PeptideShaker load SearchGUI results: {input.searchgui} -> {output.mzid}, {output.protein}, {output.peptide}"
+        "PeptideShaker load SearchGUI results: {input.info} -> {output.mzid}, {output.protein}, {output.peptide}"
     shell:
         "python searchgui_search.py -p -jar {input.jar} -in {input.info} "
         "-out {params.outputdir} -fn {params.fn} -ln {params.ln} -ce {params.ce} -ca {params.ca} "
-        #"java -cp {input.jar} eu.isas.peptideshaker.cmd.PeptideShakerCLI "
-        #"-reference 'peptideshaker_peptideshaker_1' "
-        #"-identification_files {input.searchgui} "
-        #"-out_reports $(dirname {output.protein}) -reports 6,9 "
-        #"-output_file {output.mzid} -contact_first_name 'Shengbo' -contact_last_name 'Wang' "
-        #"-contact_email 'shengbo_wang@ebi.ac.uk' -contact_address 'EBI' -organization_name 'EBI' "
-        #"-organization_email 'test@ebi.ac.uk' -organization_address 'Cambridge' "
-        #"-threads {threads} &> {log}"
+        "-on {params.on} -oe {params.oe} -oa {params.oa}"
+
 
 ########################
 # Generate post processing reports
 ########################
-#rule post_processing:
-#    input:
-#        SAMPLEINFO_FILE
-#    output:
-#        PROCESSED_RPT
-#   params:
-#        PRIDE_ID
-#   log:
-#        expand("logs/{fname}_post_processing.log", fname=PRIDE_ID)
-#   threads: 1
-#   message:
-#       "Post-processing: {input} -> {output}"
-#   shell:
-#       "python post_report_generation/main.py -s {input} -p {params} &> {log}"
+rule post_processing:
+    input:
+        info=SAMPLEINFO_FILE,
+        protein=PROTEIN_RPT,
+        peptide=PEPTIDE_RPT
+    output:
+        PROCESSED_RPT
+    params:
+        PRIDE_ID
+    log:
+        expand("logs/{fname}_post_processing.log", fname=PRIDE_ID)
+    threads: 1
+    message:
+        "Post-processing: {input.info} -> {output}"
+    shell:
+        "python post_report_generation/main.py -s {input.info} -p {params} &> {log}"
 
 
 #########################
@@ -327,8 +256,6 @@ rule gff_format_file:
     input:
         metap_sample_info=SAMPLEINFO_FILE_FINAL,
         rpt=PROCESSED_RPT
-    #reports_dir=PROCESSED_REPORTS_DIR,
-    #metag_dir=CONTIG_INFO_FILE_DIR,
     output:
         gff_file=GFF_FILE
     params:
