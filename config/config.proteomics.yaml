@@ -2,14 +2,12 @@ raws:
     Metadata: "sample_info.csv"
 
 parameters:
-    Study: "ERP124921"
+    Study: "ERP104047"
     # Input_dir: "./"
-    Proteins: "ERP021080"
-    Pride_id: "PXD005780"
+    Pride_id: "PXD003791"
     Version: "5.0"
     Db_size: 1073741824
     ThermoFold: "input/Raw"
-    # ThermoRaw: ["2018_March_5_UWPRQE_HatchMicro_16.raw"]
     first_name: "Shengbo"
     last_name: "Wang"
     email: "shengbo_wang@ebi.ac.uk"
@@ -17,7 +15,6 @@ parameters:
     org_name: "EBI"
     org_email: "test@ebi.ac.uk"
     org_address: "Cambridge"
-# sample: "sample"
 outputdir: "./"
 workdir: "./"
 tmpdir: "./tmp"
@@ -31,9 +28,9 @@ thermo:
 searchgui:
     url: "http://genesis.ugent.be/maven2/eu/isas/searchgui/SearchGUI/{version}/SearchGUI-{version}-mac_and_linux.tar.gz"
     jar: "SearchGUI-{version}/SearchGUI-{version}.jar"
-    version: "4.0.41"
+    version: "3.3.20"
     par:
-        prec_tol: 20
+        prec_tol: 10
         prec_ppm: 1
         frag_tol: 0.02
         frag_ppm: 0
@@ -50,19 +47,19 @@ searchgui:
         min_isotope: 0
         max_isotope: 1
         import_peptide_length_min: 6
-        import_peptide_length_max: 60
+        import_peptide_length_max: 50
         xtandem_noise_suppr: 0
         xtandem_quick_acetyl: 1
         xtandem_quick_pyro: 1
         xtandem_refine: 1
         msgf_instrument: 1
-        msgf_fragmentation: 3
+        msgf_fragmentation: 1
         msgf_protocol: 0
         msgf_min_pep_length: 6
-        msgf_max_pep_length: 60
+        msgf_max_pep_length: 50
         msgf_num_ptms: 2
         comet_num_ptms: 3
 peptideshaker:
     url: "http://genesis.ugent.be/maven2/eu/isas/peptideshaker/PeptideShaker/{version}/PeptideShaker-{version}.zip"
     jar: "PeptideShaker-{version}/PeptideShaker-{version}.jar"
-    version: "2.0.33"
+    version: "1.16.45"

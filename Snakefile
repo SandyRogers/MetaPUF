@@ -23,8 +23,8 @@ RESOURCEDIR = srcdir("resources")
 WORKDIR     = os.environ.get("WORKDIR", config['workdir'])
 OUTPUTDIR   = os.environ.get("OUTPUTDIR", config['outputdir'])
 TMPDIR      = os.environ.get("TMPDIR", config['tmpdir'])
-CONTIG_INFO_FILE_DIR = os.path.join(OUTPUTDIR,"assemblies")
-PROCESSED_REPORTS_DIR = os.path.join(OUTPUTDIR,"Processed_Peptide_Reports")
+CONTIG_INFO_FILE_DIR = os.path.join("","assemblies")
+PROCESSED_REPORTS_DIR = os.path.join("","Processed_Peptide_Reports")
 
 
 # parameters
@@ -80,7 +80,7 @@ PROCESSED_RPT = expand("{fname}/processed_{sname}_peptide_report.csv", fname=PRO
 THERMO_EXE = os.path.join(BINDIR, "ThermoRawFileParser/ThermoRawFileParser.exe")
 SEARCHGUI_JAR = os.path.join(BINDIR, "SearchGUI-3.3.20/SearchGUI-3.3.20.jar")
 SEARCHGUI_PAR_PARAMS = " ".join(["-%s %s" % (k, "'%s'" % v if isinstance(v, str) else str(v)) for k, v in config["searchgui"]["par"].items()])
-PEPTIDESHAKER_JAR = os.path.join(BINDIR, "PeptideShaker-1.15.46/PeptideShaker-1.15.46.jar")
+PEPTIDESHAKER_JAR = os.path.join(BINDIR, "PeptideShaker-1.16.45/PeptideShaker-1.16.45.jar")
 
 #output files
 CLUSTER_REPORT = os.path.join(CONTIG_INFO_FILE_DIR, "databases/cluster_report.txt")
