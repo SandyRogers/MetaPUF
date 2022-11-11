@@ -17,6 +17,8 @@ The packages and their versions:
 
 - $ conda create -y -n environment -c conda-forge -f environment.yml
 
+The versions of the tools ( `ThermoRawFileParser`, `SearchGui` and `PeptideShaker` ) that we used in our pipeline are not available online anymore, please download these tools via [google drive](https://drive.google.com/drive/folders/1LFyEKetMLZtVm_gZifF-yi08oY8P3Wlo?usp=sharing), after downloading, please unzip them and move the folders under the path of `workflow/bin`.
+
 # Example Usage
 ____________________________________
 
