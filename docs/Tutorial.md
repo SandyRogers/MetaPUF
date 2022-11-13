@@ -65,7 +65,12 @@ You can also input your own metagenomics and/or metatranscriptomics assemblies a
 - The workflow accepts protein predicted from Prodigal.
 - The protein file names should end with "".
 
-* `Pride_id: PRIDE dataset accession For example (PXD003791)`
+* `Pride_id: PRIDE dataset accession For example (PXD005780)`
+
+Depending on the network, it is better to downloaded the dataset (raw files) beforehand and put them in the correct folder, each sample should have a sub-folder for the Raw files. You can also use the pipeline to download the files for you, but it may take time; also, if the connection failes, all the files will need to be re-downloaded again.
+
+** Example of folder stuctrue: (PXD005780 for example)
+Under the root path of the MetaPUF project, create a folder named `input/Raw`, under this path, you need to create sub-folders for each sample: `S06`, `S07`, ... etc. And put the raw files into the correlated sub-folder. If there are multiple raw files for one sample, please put all those raw files into the same sub-folder which represents for one sample.
 
 * `Version: The version of MGnidy analysis.`
 
