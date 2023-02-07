@@ -17,7 +17,7 @@ The packages and their versions:
 
 - $ conda create -y -n environment -c conda-forge -f environment.yml
 
-The versions of the tools ( `ThermoRawFileParser`, `SearchGui` and `PeptideShaker` ) that we used in our pipeline are not available online anymore, please download these tools via [google drive](https://drive.google.com/drive/folders/1LFyEKetMLZtVm_gZifF-yi08oY8P3Wlo?usp=sharing), after downloading, please unzip them and move the folders under the path of `workflow/bin`.
+The versions of the tools ( `ThermoRawFileParser`, `SearchGui` and `PeptideShaker` ) that we used in our pipeline are not updated to the latest ones, but you can download them from these links: [PeptideShaker 1.16.45](https://genesis.ugent.be/maven2/eu/isas/peptideshaker/PeptideShaker/) and [SearchGui 3.3.20](https://genesis.ugent.be/maven2/eu/isas/searchgui/SearchGUI/), after downloading, please unzip them and move the folders under the path of `workflow/bin`.
 
 ## (Linux) Requirements
 [Mono](https://www.mono-project.com/download/stable/#download-lin) (install mono-complete if you encounter "assembly not found" errors).
@@ -45,7 +45,9 @@ ____________________________________
  $ Snakemake --cores 4
 ```
 
-- IF the pipeline got collapsed during running, you can always try to run a dry-run `Snakemake  -np` first to check how many rules have been successful executed, and if you are sure that some files are generated correctly, you can use `snakemake --cleanup-metadata <filenames>` to skip these files to be re-generated. However, sometimes `snakemake --cleanup-metadata <filenames>` doesn't work, you can also try to manually delete the `.snakemake/incomplete` directory.
+```markdown
+-Tips: IF the pipeline got collapsed during running, you can always try to run a dry-run `Snakemake  -np` first to check how many rules have been successful executed, and if you are sure that some files are generated correctly, you can use `snakemake --cleanup-metadata <filenames>` to skip these files to be re-generated. However, sometimes `snakemake --cleanup-metadata <filenames>` doesn't work, you can also try to manually delete the `.snakemake/incomplete` directory.
+```
 
 # Core contributors and collaborators
 
