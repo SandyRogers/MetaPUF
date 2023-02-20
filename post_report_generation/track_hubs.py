@@ -1,55 +1,32 @@
 import pandas as pd
 
 
-def get_sequence_header(input_fasta):
-    header = []
-
-    with open(input_fasta, 'r') as reader:
-        original_proteins = reader.readlines()
-        for line in original_proteins:
-            if line[0] == '>':
-                header.append(line[1:-1])
-
-    return header
-
-
-def remove_human_crap_protein_groups(proteinGroup):
-    PGRemovalHumanAndCrap = ""
-    tmp_pg = proteinGroup.replace(' ', '').split(',')
-    for protein in tmp_pg:
-        if not protein.startswith('MGYP9'):
-            PGRemovalHumanAndCrap += protein
-            PGRemovalHumanAndCrap += ","
-
-    if PGRemovalHumanAndCrap.endswith(','):
-        PGRemovalHumanAndCrap = PGRemovalHumanAndCrap[0:-1]
-
-    return PGRemovalHumanAndCrap
-
-
-def get_first_value(value_list):
-    first_value = value_list[0]
-
-    return first_value
-
-
 def remove_doubtful_protein_groups(proteinGroups):
+    """
+    remove doubtful protein groups (only keeps the confident ones)
+    remove protein groups which contains human and contanminat proteins
+    """
     PGLists = proteinGroups.replace(' ', '').split(';')
     PGAfterfilter = ""
     for pg in PGLists:
         if pg.endswith('(Confident)'):
             tmp_pg = pg[0:-11].replace(' ', '').split(',')
+            is_huamn_crap = False
             PGRemovalHumanAndCrap = ""
             for protein in tmp_pg:
-                if not protein.startswith('MGYP9'):
-                    PGRemovalHumanAndCrap += protein
-                    PGRemovalHumanAndCrap += ","
+                if protein.startswith('MGYP9'):
+                    is_huamn_crap = True
+                    break
+                
+                PGRemovalHumanAndCrap += protein
+                PGRemovalHumanAndCrap += ","
 
             if PGRemovalHumanAndCrap.endswith(','):
                 PGRemovalHumanAndCrap = PGRemovalHumanAndCrap[0:-1]
-
-            PGAfterfilter += PGRemovalHumanAndCrap
-            PGAfterfilter += ";"
+            
+            if is_huamn_crap == False:
+                PGAfterfilter += PGRemovalHumanAndCrap
+                PGAfterfilter += ";"
 
     if PGAfterfilter.endswith(';'):
         PGAfterfilter = PGAfterfilter[0:-1]
@@ -58,6 +35,7 @@ def remove_doubtful_protein_groups(proteinGroups):
 
 
 def count_validated_protein_groups(processedPG):
+    # after filtering, remove these empty protein groups
     PGCount = 0
     if len(processedPG) > 0:
         PGCount = len(processedPG.split(';'))
@@ -65,7 +43,78 @@ def count_validated_protein_groups(processedPG):
     return PGCount
 
 
+def get_positions(positions):
+    # getting the peptide start positions for identified proteins
+    processed_positions = ""
+    positions = positions.replace(' ', '').split(';')
+    for p in positions:
+        if p.endswith(')'):
+            processed_positions += p.split('(')[1][0:-1]
+        else:
+            processed_positions += p
+        processed_positions += ";"
+
+    if processed_positions.endswith(";"):
+        processed_positions = processed_positions[0:-1]
+
+    return processed_positions
+
+
+def remove_human_crap_protein_groups(proteinGroup):
+    # remove protein groups which contains human and contanminat proteins
+    PGRemovalHumanAndCrap = ""
+    tmp_pg = proteinGroup.replace(' ', '').split(',')
+    is_huamn_crap = False
+    for protein in tmp_pg:
+        if protein.startswith('MGYP9'):
+            is_huamn_crap = True
+            break
+        
+        PGRemovalHumanAndCrap += protein
+        PGRemovalHumanAndCrap += ","
+
+    if PGRemovalHumanAndCrap.endswith(','):
+        PGRemovalHumanAndCrap = PGRemovalHumanAndCrap[0:-1]
+    
+    if is_huamn_crap == True:
+        PGRemovalHumanAndCrap = ""
+
+    return PGRemovalHumanAndCrap
+
+
+def create_dict_for_spectrum_counting(protein_report):
+    # creating a dictionary for protein groups and the corresponding spectrum counting
+    protein = pd.read_csv(protein_report, sep='\t')[['Protein Group','Spectrum Counting']]
+    protein['Processed Protein Group'] = protein['Protein Group'].apply(remove_human_crap_protein_groups)
+    df = protein[['Processed Protein Group', 'Spectrum Counting']]
+    df = df.drop_duplicates(subset='Processed Protein Group', keep="last")
+    df = df.set_index('Processed Protein Group').to_dict(orient='index')
+
+    return df
+
+
+def get_spectrum_counting(proteinGroups, SC_df):
+    # based on the dictionary generated from the previous step,
+    # getting the Specturm Countings for protein groups from protein_reports generated from PeptideShaker
+    PGLists = proteinGroups.replace(' ', '').split(';')
+    SC = ""
+    for pg in PGLists:
+        if pg in SC_df.keys():
+            SC += str(round(SC_df[pg]['Spectrum Counting'],2))
+            SC += ";"
+
+    if SC.endswith(';'):
+        SC = SC[0:-1]
+
+    return SC
+
+
+def apply_SC(peptides, SC_df):
+    return pd.Series([get_spectrum_counting(ppg, SC_df) for ppg in peptides['Processed Protein Groups']])
+
+
 def remove_irrelevant_proteins(proteins, positions, proteinGroups):
+    # remove the proteins are not exsiting in the proccessed protein groups
     PG_proteins = []
     for pg in proteinGroups:
         for p in pg.replace(' ', '').split(','):
@@ -83,51 +132,15 @@ def remove_irrelevant_proteins(proteins, positions, proteinGroups):
     return temp_proteinIDs, temp_positions
 
 
-def get_spectrum_counting(proteinGroups, SC_df):
-    PGLists = proteinGroups.replace(' ', '').split(';')
-    SC = ""
-    for pg in PGLists:
-        if pg in SC_df.keys():
-            SC += str(round(SC_df[pg]['Spectrum Counting'],2))
-            SC += ";"
-
-    if SC.endswith(';'):
-        SC = SC[0:-1]
-
-    return SC
-
-
-def create_dict_for_spectrum_counting(protein_report):
-    protein = pd.read_csv(protein_report, sep='\t')[['Protein Group','Spectrum Counting']]
-    protein['Processed Protein Group'] = protein['Protein Group'].apply(remove_human_crap_protein_groups)
-    df = protein[['Processed Protein Group', 'Spectrum Counting']]
-    df = df.drop_duplicates(subset='Processed Protein Group', keep="last")
-    df = df.set_index('Processed Protein Group').to_dict(orient='index')
-
-    return df
-
-
-def apply_SC(peptides, SC_df):
-    return pd.Series([get_spectrum_counting(ppg, SC_df) for ppg in peptides['Processed Protein Groups']])
-
-
-def get_positions(positions):
-    processed_positions = ""
-    positions = positions.replace(' ', '').split(';')
-    for p in positions:
-        if p.endswith(')'):
-            processed_positions += p.split('(')[1][0:-1]
-        else:
-            processed_positions += p
-        processed_positions += ";"
-
-    if processed_positions.endswith(";"):
-        processed_positions = processed_positions[0:-1]
-
-    return processed_positions
-
-
 def get_track_beds(peptide_report, protein_report, save_file_name, pxd_id):
+    """
+    Post-processing the reports based on peptide and protein reports generated by PeptideShaker.
+    :param peptide_report: the peptide report file generated from PeptideShaker
+    :param protein_report: the protein report file generated from PeptideShaker
+    :param save_file_name: the post processed report file name and path
+    :param pxd_id: the PRIDE accession number
+    """
+
     peptides = pd.read_csv(peptide_report, sep='\t')[['Protein(s)','Protein Group(s)','Sequence','Position','#Validated PSMs']]
     peptides = peptides[peptides['#Validated PSMs'] > 0]
 
@@ -193,16 +206,17 @@ def get_track_beds(peptide_report, protein_report, save_file_name, pxd_id):
     output['Processed Protein Groups'] = output_processed_PG
     output['Spectrum Counting'] = output_processed_SC
 
-    seq_count = []
-    for i in range(len(output_proteins)):
-        count = 0
-        for j in range(i, len(output_proteins)):
-            if output_proteins[i] == output_proteins[j] and output_sequences[i] == output_sequences[j]:
-                count += 1
-        seq_count.append(count)
+    # the below part is not needed, we will keep the proteins which exist in different protein groups
+    # seq_count = []
+    # for i in range(len(output_proteins)):
+    #     count = 0
+    #     for j in range(i, len(output_proteins)):
+    #         if output_proteins[i] == output_proteins[j] and output_sequences[i] == output_sequences[j]:
+    #             count += 1
+    #     seq_count.append(count)
 
-    output['Protein Sequence Counts'] = seq_count
-    output = output[output['Protein Sequence Counts'] == 1]
+    # output['Protein Sequence Counts'] = seq_count
+    # output = output[output['Protein Sequence Counts'] == 1]
 
     groupby_sequence = output.groupby(['Sequence']).count()['Protein']
     seq_count = pd.DataFrame()
