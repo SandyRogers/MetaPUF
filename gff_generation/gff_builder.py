@@ -21,7 +21,6 @@ pd.options.mode.chained_assignment = None  # default='warn'
 
 def calculate_max_count(df: pd.DataFrame) -> int:
     """Generate maximum spectrum count value from a dataframe
-
     :param pd.DataFrame df: input dataframe
     :return int: maximum spectruem count value
     """
@@ -33,7 +32,7 @@ def calculate_max_count(df: pd.DataFrame) -> int:
     return max_spectrum_count
 
 
-def protein_report_processing(protein_report, protein_list: list,pride_id: str) -> pd.DataFrame:
+def protein_report_processing(protein_report, protein_list: list, pride_id: str) -> pd.DataFrame:
     """
     processing of peptide reports to yield a dataframe
     :param pride_id: ID of the associated metaproteomics study
@@ -42,63 +41,68 @@ def protein_report_processing(protein_report, protein_list: list,pride_id: str) 
 
     :return pd.DataFrame: returns two dataframes
     """
+
     #create two empty dataframe
     pep_info_high=pd.DataFrame(columns=['digest','contig_name','protein_start','protein_end','strand','Attributes'])
-    pep_info_low=pd.DataFrame(columns=['digest','contig_name','protein_start','protein_end','strand','Attributes'])
+    # pep_info_low=pd.DataFrame(columns=['digest','contig_name','protein_start','protein_end','strand','Attributes'])
     for item in protein_list:
         item = str(item)
         all_info = []
         temp_data = (protein_report.loc[protein_report['digest']==item]).reset_index(drop=True)
         unambiguous_peptides = []
         ambiguous_peptides = []
-        low_confidence_ambiguous_peptides = []
-        low_confidence_all_info = []
         sc = []
-        Unique_peptide_to_protein_mapping="None"
-        Ambiguous_peptide_to_protein_mapping="None"
+        # low_confidence_ambiguous_peptides=[]
+        # low_confidence_all_info=[]
+        # Unique_peptide_to_protein_mapping="None"
+        # Ambiguous_peptide_to_protein_mapping="None"
         for i in range(len(temp_data)):
-            if (int(temp_data["#Proteins"][i] == 1) and int(temp_data["Validated Protein Groups"][i]==1)):
+            # I have comment this because we don't need to check whether the protein belongs to one protein groups or not, 
+            # we only check if the peptide is unique mapped to the protein, which means we only check the #Proteins.
+            if int(temp_data["#Proteins"][i]) == 1:
                 unambiguous_peptides.append(temp_data["Sequence"][i]+" [PSMs:"+str(temp_data["Validated PSMs"][i])+"]")
-                print(unambiguous_peptides)
-                sc.append(temp_data["Spectrum Counting"][i])
-                print(sc)
 
-            elif (int(temp_data["#Proteins"][i] > 1) and int(temp_data["Validated Protein Groups"][i]==1)):
-                ambiguous_peptides.append(temp_data["Sequence"][i]+" [PSMs:"+str(temp_data["Validated PSMs"][i])+"]")
-                print(ambiguous_peptides)
-                sc.append(temp_data["Spectrum Counting"][i])
-                print(sc)
             else:
-                low_confidence_ambiguous_peptides.append(temp_data["Sequence"][i]+" [PSMs:"+str(temp_data["Validated PSMs"][i])+"]")
-                print(low_confidence_ambiguous_peptides)
+                ambiguous_peptides.append(temp_data["Sequence"][i]+" [PSMs:"+str(temp_data["Validated PSMs"][i])+"]")
+                
+            sc.append(temp_data["Spectrum Counting"][i])
+            contig = "_".join((temp_data["contig_name"][i]).split("_")[:-1])
+            start = temp_data["protein_start"][i]
+            end = temp_data["protein_end"][i]
+            strand = temp_data["strand"][i]
 
-            contig="_".join((temp_data["contig_name"][i]).split("_")[:-1])
-            start=temp_data["protein_start"][i]
-            end=temp_data["protein_end"][i]
-            strand=temp_data["strand"][i]
         if len(set(unambiguous_peptides)) == 0 and len(set(ambiguous_peptides)) >= 1:
-            all_info.append( (str(item) ,contig,start,end,strand, "ID="+str(item)+";type=Protein;Unique_peptide_to_protein_mapping=None;Ambiguous_peptide_to_protein_mapping=True;ambiguous_sequences="+",".join(ambiguous_peptides)+";pride_id="+pride_id+";semiquantitative_expression_spectrum_count="+ str(sc)))
+            all_info.append( (str(item), contig, start, end, strand, 
+                "ID="+str(item)+";type=Protein;Unique_peptide_to_protein_mapping=None;Ambiguous_peptide_to_protein_mapping=True;ambiguous_sequences="
+                +",".join(ambiguous_peptides)+";pride_id="+pride_id+";semiquantitative_expression_spectrum_count="+str(sc)) )
         elif len(set(unambiguous_peptides)) >=1 and len(set(ambiguous_peptides)) == 0:
-            all_info.append( (str(item) ,contig,start,end,strand, "ID="+str(item)+";type=Protein;Unique_peptide_to_protein_mapping=True;unambiguous_sequences="+",".join(unambiguous_peptides)+";Ambiguous_peptide_to_protein_mapping=None;pride_id="+pride_id+";semiquantitative_expression_spectrum_count="+ str(sc)))
+            all_info.append( (str(item), contig,start,end,strand, 
+                "ID="+str(item)+";type=Protein;Unique_peptide_to_protein_mapping=True;unambiguous_sequences="
+                +",".join(unambiguous_peptides)+";Ambiguous_peptide_to_protein_mapping=None;pride_id="
+                +pride_id+";semiquantitative_expression_spectrum_count="+str(sc)) )
         else:
-            all_info.append( (str(item) ,contig,start,end,strand, "ID="+str(item)+";type=Protein;Unique_peptide_to_protein_mapping=True;unambiguous_sequences="+",".join(unambiguous_peptides)+";Ambiguous_peptide_to_protein_mapping=True;ambiguous_sequences="+",".join(ambiguous_peptides)+";pride_id="+pride_id+";semiquantitative_expression_spectrum_count="+str(sc)) )
+            all_info.append( (str(item), contig,start,end,strand, 
+                "ID="+str(item)+";type=Protein;Unique_peptide_to_protein_mapping=True;unambiguous_sequences="
+                +",".join(unambiguous_peptides)+";Ambiguous_peptide_to_protein_mapping=True;ambiguous_sequences="
+                +",".join(ambiguous_peptides)+";pride_id="+pride_id+";semiquantitative_expression_spectrum_count="+str(sc)))
+
         df_high = pd.DataFrame(all_info, columns=['digest', 'contig_name','protein_start','protein_end','strand','Attributes'])
-        pep_info_high = pd.concat([pep_info_high,df_high], ignore_index=True)
-        if len(low_confidence_ambiguous_peptides)>=1:
-            low_confidence_all_info.append( (str(item) ,contig,start,end,strand, "ID="+str(item)+";type=Protein;Unique_peptide_to_protein_mapping=None;Ambiguous_peptide_to_protein_mapping=True;ambiguous_sequences="+",".join(ambiguous_peptides)+";pride_id="+pride_id) )
-        df_low = pd.DataFrame(low_confidence_all_info, columns=['digest', 'contig_name','protein_start','protein_end','strand','Attributes' ])
-        pep_info_low = pd.concat([pep_info_low,df_low], ignore_index=True)
+        pep_info_high = pd.concat([pep_info_high, df_high], ignore_index=True)
+
         # get the max spectrum value for the processed protein file
         max_spectrum_count = protein_report["max_spectrum_count"].unique()
-    return pep_info_high, pep_info_low, max_spectrum_count
+
+    return pep_info_high, max_spectrum_count
+
 
 def gff_generation_unique(attributes_file: str, assembly_name:str, out_folder: str, max_spectrum_count):
-    """function to generate the gff file from the data file
-
+    """
+    function to generate the gff file from the data file
     :param str attributes_file: input dataframe with all attributes for the gff file
     :param str assembly_name: name of the assemble from the study
     :param str out_folder: filepath of the output folder
     :param _type_ max_spectrum_count: value of max spectral count in the given assembly
+
     """
     gff_data=attributes_file[['contig_name','protein_start','protein_end','strand','Attributes']]
     gff_data['strand'] = gff_data['strand'].map({-1: '-', 1: '+'})

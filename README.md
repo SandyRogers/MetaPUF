@@ -1,7 +1,8 @@
 # MetaPUF
 ____________________________________
 
-####  Integration of metagenomics, metatranscriptomics and metaproteomics data in the public domain between the PRIDE database and MGnify
+####  An approach to integrate metagenomics, metatranscriptomics and metaproteomics data found in public resources
+
 # Installation
 ____________________________________
 
@@ -17,7 +18,8 @@ The packages and their versions:
 
 - $ conda create -y -n environment -c conda-forge -f environment.yml
 
-The versions of the tools ( `ThermoRawFileParser`, `SearchGui` and `PeptideShaker` ) that we used in our pipeline are not updated to the latest ones, but you can download them from these links: [PeptideShaker 1.16.45](https://genesis.ugent.be/maven2/eu/isas/peptideshaker/PeptideShaker/) and [SearchGui 3.3.20](https://genesis.ugent.be/maven2/eu/isas/searchgui/SearchGUI/), after downloading, please unzip them and move the folders under the path of `workflow/bin`.
+The versions of the tools ( [`ThermoRawFileParser`](https://github.com/compomics/ThermoRawFileParser), `SearchGui` and `PeptideShaker` ) that we used in our pipeline are not updated to the latest ones, but you can download them from these links: [PeptideShaker 1.16.45](https://genesis.ugent.be/maven2/eu/isas/peptideshaker/PeptideShaker/) and [SearchGui 3.3.20](https://genesis.ugent.be/maven2/eu/isas/searchgui/SearchGUI/), after downloading, please unzip them and move the folders under the path of `workflow/bin`.
+Please find more detailed documentation from [MetaPUF](https://metapuf-tutorial.readthedocs.io/en/latest/index.html)
 
 ## (Linux) Requirements
 [Mono](https://www.mono-project.com/download/stable/#download-lin) (install mono-complete if you encounter "assembly not found" errors).

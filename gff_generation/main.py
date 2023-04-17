@@ -77,8 +77,10 @@ def main():  # noqa: C901
     # get the filenames as list and concatenate the expressed peptides from all the samples
     sample_file_list = [args.reports_dir+"/"+f for f in os.listdir(args.reports_dir) if f.endswith('_peptide_report.csv')]
     csv_list = []
+
     for file in sorted(sample_file_list):
         csv_list.append(pd.read_csv(file))
+
     csv_merged = pd.concat(csv_list, ignore_index=True)
     csv_merged.to_csv(os.path.join(results_folder,"allsamples.csv"), index=False)
     proteins=list(set(csv_merged['Protein'].to_list()))
@@ -86,25 +88,24 @@ def main():  # noqa: C901
     unique_proteins=pd.DataFrame(proteins, columns=['digest'])
     # get the list of distinct assemblies in the study
     assemblies=list(set(sample_info['Assembly'].to_list()))
+
     for assembly in assemblies:
-        temp_assembly=pd.read_csv(os.path.join(args.metag_dir,assembly+"_contig_info.txt"), sep='\t')
+        temp_assembly=pd.read_csv(os.path.join(args.metag_dir, assembly+"_contig_info.txt"), sep='\t')
         temp_assembly.columns=['assembly','contig_name','digest','partial_info', 'protein_start','protein_end','strand','caller']
         # get all the matching expressed proteins from the contigs_info.txt
         assembly_subset_of_proteins=pd.merge(unique_proteins, temp_assembly, on='digest', how='inner')
 
         # get all the peptides expressed in the given assembly
         assembly_expressed_proteins=assembly_subset_of_proteins.merge(csv_merged, left_on='digest', right_on='Protein',how='inner')
+        
         if len(assembly_expressed_proteins) > 0:
             assembly_expressed_proteins["max_spectrum_count"] = gb.calculate_max_count(assembly_expressed_proteins)
             assembly_expressed_proteins.to_csv(os.path.join(results_folder,assembly+"_expressed_proteins.csv"))
             expressed_proteins=list(set(assembly_expressed_proteins['digest']))
-            attributes_file_h,attributes_file_l, max_spectrum_count =gb.protein_report_processing(assembly_expressed_proteins,expressed_proteins,args.pride_id)
-            if len(attributes_file_h)>=1:
-                gb.gff_generation_unique(attributes_file_h, assembly, results_folder, max_spectrum_count)
-            if len(attributes_file_l)>=1:
-                gb.gff_generation_ambiguous(attributes_file_l, assembly, results_folder)
-        else: 
-            continue
+            attributes_file, max_spectrum_count =gb.protein_report_processing(assembly_expressed_proteins,expressed_proteins,args.pride_id)
+            if len(attributes_file)>=1:
+                gb.gff_generation_unique(attributes_file, assembly, results_folder, max_spectrum_count)
+
 
     logging.info("Completed")
     logging.info("Runtime is {} seconds".format(time.time() - starttime))
