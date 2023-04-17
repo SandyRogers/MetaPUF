@@ -2,9 +2,9 @@ raws:
     Metadata: "sample_info.csv"
 
 parameters:
-    Study: "ERP104047"
+    Study: "ERP124921"
     # Input_dir: "./"
-    Pride_id: "PXD003791"
+    Pride_id: "PXD005780"
     Version: "5.0"
     Db_size: 1073741824
     ThermoFold: "input/Raw"
@@ -46,7 +46,7 @@ searchgui:
         ri: "y"
         min_isotope: 0
         max_isotope: 1
-        import_peptide_length_min: 6
+        import_peptide_length_min: 5
         import_peptide_length_max: 50
         xtandem_noise_suppr: 0
         xtandem_quick_acetyl: 1
@@ -55,7 +55,7 @@ searchgui:
         msgf_instrument: 1
         msgf_fragmentation: 1
         msgf_protocol: 0
-        msgf_min_pep_length: 6
+        msgf_min_pep_length: 5
         msgf_max_pep_length: 50
         msgf_num_ptms: 2
         comet_num_ptms: 3
