@@ -237,14 +237,15 @@ rule post_processing:
     output:
         PROCESSED_RPT
     params:
-        PRIDE_ID
+        pid=PRIDE_ID,
+        dir=PROCESSED_REPORTS_DIR
     log:
         expand("logs/{fname}_post_processing.log", fname=PRIDE_ID)
     threads: 1
     message:
         "Post-processing: {input.info} -> {output}"
     shell:
-        "python post_report_generation/main.py -s {input.info} -p {params} &> {log}"
+        "python post_report_generation/main.py -s {input.info} -d {params.dir} -p {params.pid} &> {log}"
 
 
 #########################

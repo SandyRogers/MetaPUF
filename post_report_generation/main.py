@@ -57,8 +57,8 @@ def main():
     commandline = "mkdir -p " + args.dir
     subprocess.run(commandline, shell=True)
     for sample in samples:
-        th.get_track_beds('peptideshaker/'+sample+'_Default_Peptide_Report.txt',
-                        'peptideshaker/'+sample+'_Default_Protein_Report.txt',
+        th.get_track_beds('peptideshaker/peptideshaker_'+sample+'_1_Default_Peptide_Report.txt',
+                        'peptideshaker/peptideshaker_'+sample+'_1_Default_Protein_Report.txt',
                         os.path.join(args.dir, 'processed_'+sample+'_peptide_report.csv'),
                         args.pride_id)
 
