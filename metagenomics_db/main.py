@@ -110,7 +110,7 @@ def main():  # noqa: C901
 
     samples = pd.read_csv(args.metadata, sep=',')
     for idx,row in samples.iterrows():
-        sample_assembly_map[row['Sample Accession']].add(row['Assembly'])
+        sample_assembly_map[row['Secondary Sample Accession']].add(row['Assembly'])
     print("Mapping between samples and the assemblies: ",sample_assembly_map)
     for k, v in sample_assembly_map.items():
         sample_file = os.path.join(assembly_folder, k + ".fasta.gz")
