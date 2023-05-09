@@ -38,7 +38,7 @@ ORG_ADDRESS = os.environ.get("ORG_ADDRESS", config["parameters"]["org_address"])
 THERMOFOLD  = os.environ.get("THERMOFOLD", config["parameters"]["ThermoFold"])
 STUDY       = os.environ.get("STUDY", config["parameters"]["Study"])
 PRIDE_ID    = os.environ.get("PRIDE_ID", config["parameters"]["Pride_id"])
-VERSION     = os.environ.get("VERSION", config["parameters"]["Version"])
+MGnify_version = os.environ.get("MGnify_version", config["parameters"]["MGnify_version"])
 DB_SIZE     = os.environ.get("DB_SIZE", config["parameters"]["Db_size"])
 METADATA    = os.environ.get("METADATA", config["raws"]["Metadata"])
 SEARCHGUI_OUTPUT = os.environ.get("SEARCHGUI_OUTPUT", config["output"]["searchgui_folder"])
@@ -116,7 +116,7 @@ rule generate_db:
         cluster_rpt=CLUSTER_REPORT
     params:
         study=STUDY if config["parameters"]["Study"] else config["parameters"]["Input_dir"],
-        ver=VERSION,
+        ver=MGnify_version,
         output_dir=OUTPUTDIR,
         db_size=DB_SIZE
     log:

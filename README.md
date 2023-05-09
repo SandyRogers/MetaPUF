@@ -1,7 +1,7 @@
 # MetaPUF
 ____________________________________
 
-####  An approach to integrate metagenomics, metatranscriptomics and metaproteomics data found in public resources
+####  An approach to integrate metagenomics, metatranscriptomics and metaproteomics data found in public resources such as MGnify (for metagenomics/metatranscriptomics) and the PRIDE database (for metaproteomics). When these omics techniques are applied to the same sample, their integration offers new opportunities to understand the structure (metagenome) and functional expression (metatranscriptome and metaproteome) of the microbiome.
 
 # Installation
 ____________________________________
