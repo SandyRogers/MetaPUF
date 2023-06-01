@@ -6,6 +6,8 @@ ____________________________________
 # Installation
 ____________________________________
 
+Please follow the instructions from the [tutorial](https://metapuf-tutorial.readthedocs.io/en/latest/installation.html#installation) 
+
 The packages and their versions:
 - Python3
 - Snakemake==7.3.8
@@ -14,11 +16,7 @@ The packages and their versions:
 - pandas==1.4.2
 - sourmash==4.4.2
 
-- install with conda (recommended)
-
-- $ conda env create -f metapuf_env.yml
-
-The versions of the tools ( [`ThermoRawFileParser`](https://github.com/compomics/ThermoRawFileParser), `SearchGui` and `PeptideShaker` ) that we used in our pipeline are not updated to the latest ones, but you can download them from these links: [PeptideShaker 1.16.45](https://genesis.ugent.be/maven2/eu/isas/peptideshaker/PeptideShaker/) and [SearchGui 3.3.20](https://genesis.ugent.be/maven2/eu/isas/searchgui/SearchGUI/), after downloading, please unzip them and move the folders under the path of `workflow/bin`.
+The versions of the tools ( [`ThermoRawFileParser`](https://github.com/compomics/ThermoRawFileParser), `SearchGui` and `PeptideShaker` ) that we used in our pipeline are not updated to the latest ones, you can still use the latest version of ThermoRawFileParser, but you will need to download other two tools from these links: [PeptideShaker 1.16.45](https://genesis.ugent.be/maven2/eu/isas/peptideshaker/PeptideShaker/) and [SearchGui 3.3.20](https://genesis.ugent.be/maven2/eu/isas/searchgui/SearchGUI/), after downloading, please unzip them and move the folders under the path of `workflow/bin`.
 Please find more detailed documentation from [MetaPUF](https://metapuf-tutorial.readthedocs.io/en/latest/index.html)
 
 ## (Linux) Requirements
