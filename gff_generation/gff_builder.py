@@ -119,7 +119,7 @@ def gff_generation_unique(attributes_file: str, assembly_name:str, out_folder: s
     out_file=os.path.join(out_folder, assembly_name+"_unique_peptides.gff")
     with open(out_file,'w', buffering=1) as out_handle:
         print('##gff-version 3', file=out_handle)
-        print('##max_sprectrum_count_value_in_study='+str(max_spectrum_count[0]), file=out_handle)
+        print('##max_spectrum_count_value_in_study='+str(max_spectrum_count[0]), file=out_handle)
         for row in df_flatten:
             print('\t'.join([str(val) for val in row]), file=out_handle)
 
