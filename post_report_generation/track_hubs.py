@@ -82,35 +82,29 @@ def remove_human_crap_protein_groups(proteinGroup):
     return PGRemovalHumanAndCrap
 
 
-def create_dict_for_spectrum_counting(protein_report):
-    # creating a dictionary for protein groups and the corresponding spectrum counting
-    protein = pd.read_csv(protein_report, sep='\t')[['Protein Group','Spectrum Counting']]
-    protein['Processed Protein Group'] = protein['Protein Group'].apply(remove_human_crap_protein_groups)
-    df = protein[['Processed Protein Group', 'Spectrum Counting']]
-    df = df.drop_duplicates(subset='Processed Protein Group', keep="last")
-    df = df.set_index('Processed Protein Group').to_dict(orient='index')
+# def create_dict_for_spectrum_counting(protein_report):
+#     # creating a dictionary for protein groups and the corresponding spectrum counting
+#     protein = pd.read_csv(protein_report, sep='\t')[['Protein Group','Spectrum Counting']]
+#     protein['Processed Protein Group'] = protein['Protein Group'].apply(remove_human_crap_protein_groups)
+#     df = protein[['Processed Protein Group', 'Spectrum Counting']]
+#     df = df.drop_duplicates(subset='Processed Protein Group', keep="last")
+#     df = df.set_index('Processed Protein Group').to_dict(orient='index')
+
+#     return df
+
+
+def get_spectrum_counting(protein_report):
+    # getting the Specturm Countings for protein (Main Accession) from protein_reports generated from PeptideShaker
+    protein = pd.read_csv(protein_report, sep='\t')[['Main Accession','#Validated PSMs','Spectrum Counting']]
+    protein = protein[protein['#Validated PSMs'] > 0][['Main Accession','Spectrum Counting']]
+    df = protein.drop_duplicates(subset='Main Accession', keep="last")
+    df = df.rename(columns={"Main Accession": "Protein"})
 
     return df
 
 
-def get_spectrum_counting(proteinGroups, SC_df):
-    # based on the dictionary generated from the previous step,
-    # getting the Specturm Countings for protein groups from protein_reports generated from PeptideShaker
-    PGLists = proteinGroups.replace(' ', '').split(';')
-    SC = ""
-    for pg in PGLists:
-        if pg in SC_df.keys():
-            SC += str(round(SC_df[pg]['Spectrum Counting'],2))
-            SC += ";"
-
-    if SC.endswith(';'):
-        SC = SC[0:-1]
-
-    return SC
-
-
-def apply_SC(peptides, SC_df):
-    return pd.Series([get_spectrum_counting(ppg, SC_df) for ppg in peptides['Processed Protein Groups']])
+# def apply_SC(peptides, SC_df):
+#     return pd.Series([get_spectrum_counting(ppg, SC_df) for ppg in peptides['Processed Protein Groups']])
 
 
 def remove_irrelevant_proteins(proteins, positions, proteinGroups):
@@ -150,9 +144,7 @@ def get_track_beds(peptide_report, protein_report, save_file_name, pxd_id):
     peptides['Processed Position'] = peptides['Position'].apply(get_positions)
     peptides = peptides.reset_index()
 
-    SC_df = create_dict_for_spectrum_counting(protein_report)
-    # peptides['Spectrum Counting'] = peptides['Processed Protein Groups'].apply(get_spectrum_counting)
-    peptides['Spectrum Counting'] = apply_SC(peptides, SC_df)
+    SC_df = get_spectrum_counting(protein_report)
 
     proteins = peptides['Protein(s)'].str.replace(' ', '').str.split(';')
     proteinGroups = peptides['Processed Protein Groups'].str.replace(' ', '').str.split(';')
@@ -161,7 +153,6 @@ def get_track_beds(peptide_report, protein_report, save_file_name, pxd_id):
     validated_psms = peptides['#Validated PSMs']
     validated_PG = peptides['Validated Protein Groups']
     processed_PG = peptides['Processed Protein Groups']
-    processed_SC = peptides['Spectrum Counting']
 
 
     processed_proteins = []
@@ -177,7 +168,6 @@ def get_track_beds(peptide_report, protein_report, save_file_name, pxd_id):
     output_validated_psms = []
     output_validated_PG = []
     output_processed_PG = []
-    output_processed_SC = []
     for i in range(len(processed_proteins)):
         protein_list = processed_proteins[i]
         seq = sequences[i]
@@ -185,7 +175,6 @@ def get_track_beds(peptide_report, protein_report, save_file_name, pxd_id):
         valid_psm = validated_psms[i]
         valid_PG = validated_PG[i]
         pg = processed_PG[i]
-        sc = processed_SC[i]
 
         for j in range(len(protein_list)):
             output_proteins.append(protein_list[j])
@@ -194,7 +183,6 @@ def get_track_beds(peptide_report, protein_report, save_file_name, pxd_id):
             output_validated_psms.append(valid_psm)
             output_validated_PG.append(valid_PG)
             output_processed_PG.append(pg)
-            output_processed_SC.append(sc)
 
 
     output = pd.DataFrame()
@@ -204,7 +192,8 @@ def get_track_beds(peptide_report, protein_report, save_file_name, pxd_id):
     output['Validated PSMs'] = output_validated_psms
     output['Validated Protein Groups'] = output_validated_PG
     output['Processed Protein Groups'] = output_processed_PG
-    output['Spectrum Counting'] = output_processed_SC
+    
+    output = output.merge(SC_df, how='left', on='Protein')
 
     # the below part is not needed, we will keep the proteins which exist in different protein groups
     # seq_count = []
