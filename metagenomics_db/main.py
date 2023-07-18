@@ -14,18 +14,19 @@
 # limitations under the License.
 
 import gzip
-import os
 import logging
+import os
 import shutil
-import mg_toolkit
 import subprocess
 import sys
-import sourmash
-import screed
 import time
 from argparse import ArgumentParser
 from collections import defaultdict
+
+import mg_toolkit
 import pandas as pd
+import screed
+import sourmash
 
 from metagenomics_db import fetch_data as fd
 from metagenomics_db import get_clusters as gc

@@ -13,12 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import logging
 import os
 import shutil
-import logging
-import time
 import subprocess
+import time
 from argparse import ArgumentParser
+
 import pandas as pd
 
 from gff_generation import gff_builder as gb

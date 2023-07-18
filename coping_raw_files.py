@@ -1,8 +1,9 @@
 import argparse
-import sys
 import os
-import pandas as pd
 import subprocess
+import sys
+
+import pandas as pd
 
 
 def get_args():

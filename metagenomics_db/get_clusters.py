@@ -14,10 +14,10 @@
 # limitations under the License.
 
 
-import sys
 import json
 import logging
 import os
+import sys
 
 import pandas as pd
 from scipy.cluster.hierarchy import fcluster, linkage
