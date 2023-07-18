@@ -6,29 +6,29 @@ def remove_doubtful_protein_groups(proteinGroups):
     remove doubtful protein groups (only keeps the confident ones)
     remove protein groups which contains human and contanminat proteins
     """
-    PGLists = proteinGroups.replace(' ', '').split(';')
+    PGLists = proteinGroups.replace(" ", "").split(";")
     PGAfterfilter = ""
     for pg in PGLists:
-        if pg.endswith('(Confident)'):
-            tmp_pg = pg[0:-11].replace(' ', '').split(',')
+        if pg.endswith("(Confident)"):
+            tmp_pg = pg[0:-11].replace(" ", "").split(",")
             is_huamn_crap = False
             PGRemovalHumanAndCrap = ""
             for protein in tmp_pg:
-                if protein.startswith('MGYP9'):
+                if protein.startswith("MGYP9"):
                     is_huamn_crap = True
                     break
-                
+
                 PGRemovalHumanAndCrap += protein
                 PGRemovalHumanAndCrap += ","
 
-            if PGRemovalHumanAndCrap.endswith(','):
+            if PGRemovalHumanAndCrap.endswith(","):
                 PGRemovalHumanAndCrap = PGRemovalHumanAndCrap[0:-1]
-            
+
             if is_huamn_crap == False:
                 PGAfterfilter += PGRemovalHumanAndCrap
                 PGAfterfilter += ";"
 
-    if PGAfterfilter.endswith(';'):
+    if PGAfterfilter.endswith(";"):
         PGAfterfilter = PGAfterfilter[0:-1]
 
     return PGAfterfilter
@@ -38,7 +38,7 @@ def count_validated_protein_groups(processedPG):
     # after filtering, remove these empty protein groups
     PGCount = 0
     if len(processedPG) > 0:
-        PGCount = len(processedPG.split(';'))
+        PGCount = len(processedPG.split(";"))
 
     return PGCount
 
@@ -46,10 +46,10 @@ def count_validated_protein_groups(processedPG):
 def get_positions(positions):
     # getting the peptide start positions for identified proteins
     processed_positions = ""
-    positions = positions.replace(' ', '').split(';')
+    positions = positions.replace(" ", "").split(";")
     for p in positions:
-        if p.endswith(')'):
-            processed_positions += p.split('(')[1][0:-1]
+        if p.endswith(")"):
+            processed_positions += p.split("(")[1][0:-1]
         else:
             processed_positions += p
         processed_positions += ";"
@@ -63,19 +63,19 @@ def get_positions(positions):
 def remove_human_crap_protein_groups(proteinGroup):
     # remove protein groups which contains human and contanminat proteins
     PGRemovalHumanAndCrap = ""
-    tmp_pg = proteinGroup.replace(' ', '').split(',')
+    tmp_pg = proteinGroup.replace(" ", "").split(",")
     is_huamn_crap = False
     for protein in tmp_pg:
-        if protein.startswith('MGYP9'):
+        if protein.startswith("MGYP9"):
             is_huamn_crap = True
             break
-        
+
         PGRemovalHumanAndCrap += protein
         PGRemovalHumanAndCrap += ","
 
-    if PGRemovalHumanAndCrap.endswith(','):
+    if PGRemovalHumanAndCrap.endswith(","):
         PGRemovalHumanAndCrap = PGRemovalHumanAndCrap[0:-1]
-    
+
     if is_huamn_crap == True:
         PGRemovalHumanAndCrap = ""
 
@@ -95,9 +95,13 @@ def remove_human_crap_protein_groups(proteinGroup):
 
 def get_spectrum_counting(protein_report):
     # getting the Specturm Countings for protein (Main Accession) from protein_reports generated from PeptideShaker
-    protein = pd.read_csv(protein_report, sep='\t')[['Main Accession','#Validated PSMs','Spectrum Counting']]
-    protein = protein[protein['#Validated PSMs'] > 0][['Main Accession','Spectrum Counting']]
-    df = protein.drop_duplicates(subset='Main Accession', keep="last")
+    protein = pd.read_csv(protein_report, sep="\t")[
+        ["Main Accession", "#Validated PSMs", "Spectrum Counting"]
+    ]
+    protein = protein[protein["#Validated PSMs"] > 0][
+        ["Main Accession", "Spectrum Counting"]
+    ]
+    df = protein.drop_duplicates(subset="Main Accession", keep="last")
     df = df.rename(columns={"Main Accession": "Protein"})
 
     return df
@@ -111,7 +115,7 @@ def remove_irrelevant_proteins(proteins, positions, proteinGroups):
     # remove the proteins are not exsiting in the proccessed protein groups
     PG_proteins = []
     for pg in proteinGroups:
-        for p in pg.replace(' ', '').split(','):
+        for p in pg.replace(" ", "").split(","):
             PG_proteins.append(p)
     PG_proteins = list(set(PG_proteins))
 
@@ -135,30 +139,39 @@ def get_track_beds(peptide_report, protein_report, save_file_name, pxd_id):
     :param pxd_id: the PRIDE accession number
     """
 
-    peptides = pd.read_csv(peptide_report, sep='\t')[['Protein(s)','Protein Group(s)','Sequence','Position','#Validated PSMs']]
-    peptides = peptides[peptides['#Validated PSMs'] > 0]
+    peptides = pd.read_csv(peptide_report, sep="\t")[
+        ["Protein(s)", "Protein Group(s)", "Sequence", "Position", "#Validated PSMs"]
+    ]
+    peptides = peptides[peptides["#Validated PSMs"] > 0]
 
-    peptides['Processed Protein Groups'] = peptides['Protein Group(s)'].apply(remove_doubtful_protein_groups)
-    peptides['Validated Protein Groups'] = peptides['Processed Protein Groups'].apply(count_validated_protein_groups)
-    peptides = peptides[peptides['Validated Protein Groups'] > 0]
-    peptides['Processed Position'] = peptides['Position'].apply(get_positions)
+    peptides["Processed Protein Groups"] = peptides["Protein Group(s)"].apply(
+        remove_doubtful_protein_groups
+    )
+    peptides["Validated Protein Groups"] = peptides["Processed Protein Groups"].apply(
+        count_validated_protein_groups
+    )
+    peptides = peptides[peptides["Validated Protein Groups"] > 0]
+    peptides["Processed Position"] = peptides["Position"].apply(get_positions)
     peptides = peptides.reset_index()
 
     SC_df = get_spectrum_counting(protein_report)
 
-    proteins = peptides['Protein(s)'].str.replace(' ', '').str.split(';')
-    proteinGroups = peptides['Processed Protein Groups'].str.replace(' ', '').str.split(';')
-    positions = peptides['Processed Position'].str.replace(' ', '').str.split(';')
-    sequences = peptides['Sequence']
-    validated_psms = peptides['#Validated PSMs']
-    validated_PG = peptides['Validated Protein Groups']
-    processed_PG = peptides['Processed Protein Groups']
-
+    proteins = peptides["Protein(s)"].str.replace(" ", "").str.split(";")
+    proteinGroups = (
+        peptides["Processed Protein Groups"].str.replace(" ", "").str.split(";")
+    )
+    positions = peptides["Processed Position"].str.replace(" ", "").str.split(";")
+    sequences = peptides["Sequence"]
+    validated_psms = peptides["#Validated PSMs"]
+    validated_PG = peptides["Validated Protein Groups"]
+    processed_PG = peptides["Processed Protein Groups"]
 
     processed_proteins = []
     processed_positions = []
     for i in range(len(proteins)):
-        temp_proteinIDs, temp_positions = remove_irrelevant_proteins(proteins[i], positions[i], proteinGroups[i])
+        temp_proteinIDs, temp_positions = remove_irrelevant_proteins(
+            proteins[i], positions[i], proteinGroups[i]
+        )
         processed_proteins.append(temp_proteinIDs)
         processed_positions.append(temp_positions)
 
@@ -184,16 +197,15 @@ def get_track_beds(peptide_report, protein_report, save_file_name, pxd_id):
             output_validated_PG.append(valid_PG)
             output_processed_PG.append(pg)
 
-
     output = pd.DataFrame()
-    output['Protein'] = output_proteins
-    output['Sequence'] = output_sequences
-    output['Position'] = output_positions
-    output['Validated PSMs'] = output_validated_psms
-    output['Validated Protein Groups'] = output_validated_PG
-    output['Processed Protein Groups'] = output_processed_PG
-    
-    output = output.merge(SC_df, how='left', on='Protein')
+    output["Protein"] = output_proteins
+    output["Sequence"] = output_sequences
+    output["Position"] = output_positions
+    output["Validated PSMs"] = output_validated_psms
+    output["Validated Protein Groups"] = output_validated_PG
+    output["Processed Protein Groups"] = output_processed_PG
+
+    output = output.merge(SC_df, how="left", on="Protein")
 
     # the below part is not needed, we will keep the proteins which exist in different protein groups
     # seq_count = []
@@ -207,14 +219,25 @@ def get_track_beds(peptide_report, protein_report, save_file_name, pxd_id):
     # output['Protein Sequence Counts'] = seq_count
     # output = output[output['Protein Sequence Counts'] == 1]
 
-    groupby_sequence = output.groupby(['Sequence']).count()['Protein']
+    groupby_sequence = output.groupby(["Sequence"]).count()["Protein"]
     seq_count = pd.DataFrame()
-    seq_count['Sequence'] = groupby_sequence.index.to_list()
-    seq_count['#Proteins'] = groupby_sequence.values
-    output = output.merge(seq_count, how='left', on='Sequence')
+    seq_count["Sequence"] = groupby_sequence.index.to_list()
+    seq_count["#Proteins"] = groupby_sequence.values
+    output = output.merge(seq_count, how="left", on="Sequence")
 
-    output['PXD ID'] = pxd_id
-    output['PRIDE Link'] = 'ebi.ac.uk/pride/archive/projects/' + pxd_id
+    output["PXD ID"] = pxd_id
+    output["PRIDE Link"] = "ebi.ac.uk/pride/archive/projects/" + pxd_id
 
-    save_columns = ['Protein','Sequence','Position','#Proteins','Validated Protein Groups','Validated PSMs','Spectrum Counting','Processed Protein Groups','PXD ID','PRIDE Link']
+    save_columns = [
+        "Protein",
+        "Sequence",
+        "Position",
+        "#Proteins",
+        "Validated Protein Groups",
+        "Validated PSMs",
+        "Spectrum Counting",
+        "Processed Protein Groups",
+        "PXD ID",
+        "PRIDE Link",
+    ]
     output[save_columns].to_csv(save_file_name, index=False)

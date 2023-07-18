@@ -1,4 +1,4 @@
-#-*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 # Copyright 2022 EMBL - European Bioinformatics Institute
 #
@@ -23,8 +23,10 @@ import shutil
 from os import stat
 
 import pandas as pd
+
 pd.options.mode.chained_assignment = None  # default='warn'
 from Bio import SeqIO
+
 
 def check_study_accession(study_accession):
     study_accession_re = re.compile(r"((E|D|S)RP[0-9]{6,})")
@@ -34,26 +36,32 @@ def check_study_accession(study_accession):
     else:
         print("Starting the workflow")
 
-def parsing_header(header, pipeline_version='5.0'):
-    callers_versions = {
-        '5.0': {'FGS': '1.31', 'Prodigal': '2.6.3'},
-        '4.1': {'FGS': '1.20', 'Prodigal': '2.6.3'}}  # pipeline version and corresponding versions of callers
-    partial_dict = {'00': 'full', '01': 'partial', '10': 'partial', '11': 'partial'}
 
-#     length, coverage = get_length_and_coverage(header)
-    if 'partial' in header:
+def parsing_header(header, pipeline_version="5.0"):
+    callers_versions = {
+        "5.0": {"FGS": "1.31", "Prodigal": "2.6.3"},
+        "4.1": {"FGS": "1.20", "Prodigal": "2.6.3"},
+    }  # pipeline version and corresponding versions of callers
+    partial_dict = {"00": "full", "01": "partial", "10": "partial", "11": "partial"}
+
+    #     length, coverage = get_length_and_coverage(header)
+    if "partial" in header:
         # prodigal header:
         # v5.0
         # >ERZ1738565.7-k99-1872_1 # 1 # 426 # -1 # ID=1_1;partial=10;start_type=ATG;rbs_motif=None;rbs_spacer=None;gc_cont=0.615
         # v4.1
         # >ERZ476429.1-NODE-1-length-477407-cov-27.154_1 # 3 # 296 # 1 # ID=1_1;partial=10;start_type=Edge;rbs_motif=None;rbs_spacer=None;gc_cont=0.449 IPR017896/PF12838/8-78|G3DSA:3.30.70.20/18-69;2-17;70-90
 
-        caller = 'Prodigal'
-        start_coordinate, stop_coordinate, strand, *_ = re.findall(r"#\s(.*?)\s", header)
-        id, partial, start_type, stop_type, rbs_motif, *_ = re.findall(r"\=(.*?)\;", header)
+        caller = "Prodigal"
+        start_coordinate, stop_coordinate, strand, *_ = re.findall(
+            r"#\s(.*?)\s", header
+        )
+        id, partial, start_type, stop_type, rbs_motif, *_ = re.findall(
+            r"\=(.*?)\;", header
+        )
 
         # Flip strand if prediction is on the reverse strand
-        if strand == '-1':
+        if strand == "-1":
             partial = partial[::-1]
     else:
         # FGS header:
@@ -62,73 +70,116 @@ def parsing_header(header, pipeline_version='5.0'):
         # v4.1
         # >ERZ476429.1-NODE-1-length-477407-cov-27.154_120011_120250_+ PF13412/19-65|IPR011991/G3DSA:1.10.10.10/15-78
 
-        partial = '11'
-        caller = 'FGS'
-        list_fields = header.split(' ')[0].split('_')
+        partial = "11"
+        caller = "FGS"
+        list_fields = header.split(" ")[0].split("_")
         length = len(list_fields)
-        sign_strand, stop_coordinate, start_coordinate = list_fields[length-1], list_fields[length-2], list_fields[length-3]
-        strand = str(int(sign_strand + '1'))
-    caller_field = caller + '_' + callers_versions[str(pipeline_version)][caller]
+        sign_strand, stop_coordinate, start_coordinate = (
+            list_fields[length - 1],
+            list_fields[length - 2],
+            list_fields[length - 3],
+        )
+        strand = str(int(sign_strand + "1"))
+    caller_field = caller + "_" + callers_versions[str(pipeline_version)][caller]
     partial_field = partial_dict[partial]
-    return partial_field, partial, start_coordinate, stop_coordinate, strand, caller_field
+    return (
+        partial_field,
+        partial,
+        start_coordinate,
+        stop_coordinate,
+        strand,
+        caller_field,
+    )
 
-def create_digest(input_string): # input_string=partial_+record.seq
+
+def create_digest(input_string):  # input_string=partial_+record.seq
     """
-        Create digest sha128
-        :param input_string: input string
-        :return: digest
-        """
-    digest = hashlib.sha256(str(input_string).encode('utf-8')).hexdigest()
+    Create digest sha128
+    :param input_string: input string
+    :return: digest
+    """
+    digest = hashlib.sha256(str(input_string).encode("utf-8")).hexdigest()
     return digest
 
 
-
-def rename_contigs(assembly: str, out_folder:str,sequence_dir: str ):
-    with gzip.open(os.path.join(out_folder, assembly+".faa.gz"), 'wt') as fasta_out,open(os.path.join(out_folder, assembly+"_contig_info.txt"), 'w') as peptides_metadata:
-        with gzip.open(os.path.join(sequence_dir, assembly+"_FASTA_predicted_cds.faa.gz"), 'rt') as cds_fasta:
+def rename_contigs(assembly: str, out_folder: str, sequence_dir: str):
+    with gzip.open(
+        os.path.join(out_folder, assembly + ".faa.gz"), "wt"
+    ) as fasta_out, open(
+        os.path.join(out_folder, assembly + "_contig_info.txt"), "w"
+    ) as peptides_metadata:
+        with gzip.open(
+            os.path.join(sequence_dir, assembly + "_FASTA_predicted_cds.faa.gz"), "rt"
+        ) as cds_fasta:
             for record in SeqIO.parse(cds_fasta, "fasta"):
-                contig_name=record.id
+                contig_name = record.id
                 sequence = record.seq
-                partial_field, partial, start_coordinate, stop_coordinate, strand, caller = parsing_header(record.description)
+                (
+                    partial_field,
+                    partial,
+                    start_coordinate,
+                    stop_coordinate,
+                    strand,
+                    caller,
+                ) = parsing_header(record.description)
                 digest = create_digest(contig_name + sequence)
-                peptides_metadata.write('\t'.join([assembly, contig_name, digest, partial_field, start_coordinate, stop_coordinate, strand, caller]) + '\n')
-                record.id=digest
-                record.description=digest
+                peptides_metadata.write(
+                    "\t".join(
+                        [
+                            assembly,
+                            contig_name,
+                            digest,
+                            partial_field,
+                            start_coordinate,
+                            stop_coordinate,
+                            strand,
+                            caller,
+                        ]
+                    )
+                    + "\n"
+                )
+                record.id = digest
+                record.description = digest
                 SeqIO.write(record, fasta_out, "fasta")
-
-
 
 
 def count_proteins(sample_assembly_dict: dict, seq_dir: str):
     protein_counts = {}
     for sample, assemblies in sample_assembly_dict.items():
-        total_count=0
+        total_count = 0
         for assembly in assemblies:
-            assembly_path=os.path.join(seq_dir,assembly+"_FASTA_predicted_cds.faa.gz")
-            with gzip.open(assembly_path, 'rt') as assembly_fasta:
+            assembly_path = os.path.join(
+                seq_dir, assembly + "_FASTA_predicted_cds.faa.gz"
+            )
+            with gzip.open(assembly_path, "rt") as assembly_fasta:
                 for line in assembly_fasta:
                     if line.startswith(">"):
                         total_count += 1
-        protein_counts[sample]=total_count
+        protein_counts[sample] = total_count
     return protein_counts
 
-def build_db(study_acc, db_dir,assembly_dir,sample_df, cluster_dict):
-    sample_df['Db_name']=""
+
+def build_db(study_acc, db_dir, assembly_dir, sample_df, cluster_dict):
+    sample_df["Db_name"] = ""
     for group_no, assembly_list in cluster_dict.items():
-        total_count=0
+        total_count = 0
         db_name = study_acc + "_cluster_set_" + str(group_no) + ".faa"
         database_file = os.path.join(db_dir, db_name)
-        with open(database_file, 'w') as fasta_out:
+        with open(database_file, "w") as fasta_out:
             for assembly in assembly_list:
-                with gzip.open(os.path.join(assembly_dir,assembly+".faa.gz"), "rt") as infile:
+                with gzip.open(
+                    os.path.join(assembly_dir, assembly + ".faa.gz"), "rt"
+                ) as infile:
                     shutil.copyfileobj(infile, fasta_out)
 
-    #Writing database information in sample_df file
+    # Writing database information in sample_df file
     for group_no, assembly_list in cluster_dict.items():
         for assembly in assembly_list:
             for i in range(len(sample_df)):
-                if assembly==sample_df['Assembly'][i]:
-                    sample_df['Db_name'][i]= "unique_" + study_acc + "_cluster_set_" + str(group_no) + ".faa"
+                if assembly == sample_df["Assembly"][i]:
+                    sample_df["Db_name"][i] = (
+                        "unique_" + study_acc + "_cluster_set_" + str(group_no) + ".faa"
+                    )
     sample_df.to_csv(os.path.join(assembly_dir, "sample_info_final.csv"))
 
 
@@ -156,9 +207,8 @@ def uniq_proteins(d_dir: str, db_name: str):
         fin.write(db_size + "\n")
 
 
-
 def remove_file(file_name):
     try:
         os.remove(file_name)
     except OSError as e:  ## if failed, report it back to the user ##
-        print ("Error: %s - %s." % (e.filename, e.strerror))
+        print("Error: %s - %s." % (e.filename, e.strerror))

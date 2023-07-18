@@ -1,0 +1,29 @@
+[project]
+name = "MetaPUF"
+readme = "README.md"
+authors = [
+  {name = "MGnify team", email = "metagenomics-help@ebi.ac.uk"},
+  {name = "PRIDE team", email = "pride-support@ebi.ac.uk"}
+]
+license = {file = "LICENSE"}
+keywords = ["proteins", "pipeline", "bioinformatics", "metagenomics", "snakemake"]
+version = "1.0.0"
+
+dependencies = []
+[tool.setuptools]
+packages = []
+
+[project.urls]
+Homepage = "https://www.ebi.ac.uk/metagenomics"
+Documentation = "https://metapuf-tutorial.readthedocs.io/en/latest/"
+Repository = "https://github.com/PRIDE-reanalysis/MetaPUF"
+
+[project.optional-dependencies]
+docs = [
+    "mkdocs==1.4.3",
+    "mkdocs-material==9.1.18",
+]
+dev = [
+    "pre-commit==3.3.3",
+    "black==23.7.0"
+]

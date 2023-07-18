@@ -20,6 +20,7 @@ import pandas as pd
 
 from post_report_generation import track_hubs as th
 
+
 def dir_path(string):
     if os.path.isdir(string):
         return string
@@ -33,34 +34,43 @@ def main():
     and generate processed peptide reports for gff file generation
     """
     parser = ArgumentParser(
-        description="Metadata for the post processing of peptide reports")
+        description="Metadata for the post processing of peptide reports"
+    )
     parser.add_argument(
-        "-s","--sample_info",
+        "-s",
+        "--sample_info",
         type=str,
         required=True,
-        help="Absolute path of the sample metadata file",)
+        help="Absolute path of the sample metadata file",
+    )
     parser.add_argument(
-        "-d","--dir",
+        "-d",
+        "--dir",
         type=str,
         required=True,
-        help="output directory",)
+        help="output directory",
+    )
     parser.add_argument(
-        "-p","--pride_id",
+        "-p",
+        "--pride_id",
         type=str,
         required=True,
-        help="PRIDE id for the reanalysed study",)
+        help="PRIDE id for the reanalysed study",
+    )
 
     args = parser.parse_args()
-    sample_info=pd.read_csv(args.sample_info, sep=',')
-    samples=list(set(sample_info['Sample'].to_list()))
+    sample_info = pd.read_csv(args.sample_info, sep=",")
+    samples = list(set(sample_info["Sample"].to_list()))
 
     commandline = "mkdir -p " + args.dir
     subprocess.run(commandline, shell=True)
     for sample in samples:
-        th.get_track_beds('peptideshaker/peptideshaker_'+sample+'_1_Default_Peptide_Report.txt',
-                        'peptideshaker/peptideshaker_'+sample+'_1_Default_Protein_Report.txt',
-                        os.path.join(args.dir, 'processed_'+sample+'_peptide_report.csv'),
-                        args.pride_id)
+        th.get_track_beds(
+            "peptideshaker/peptideshaker_" + sample + "_1_Default_Peptide_Report.txt",
+            "peptideshaker/peptideshaker_" + sample + "_1_Default_Protein_Report.txt",
+            os.path.join(args.dir, "processed_" + sample + "_peptide_report.csv"),
+            args.pride_id,
+        )
 
 
 if __name__ == "__main__":

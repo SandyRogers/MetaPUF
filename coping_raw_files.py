@@ -12,21 +12,31 @@ def get_args():
             between PRIDE and MGnify, then exeucte shell scripts. """
     )
 
-    parser.add_argument('-info', '--sampleinfo', dest='info_file',
-                        help="the sample information file, where stores the mapping information for samples, databases and raw files")
-    parser.add_argument('-out', '--output', dest='output_folder', help="the folder path for saving files")
-    parser.add_argument('-exe', '--exefile', dest='exe_file', help="the exec file")
+    parser.add_argument(
+        "-info",
+        "--sampleinfo",
+        dest="info_file",
+        help="the sample information file, where stores the mapping information for samples, databases and raw files",
+    )
+    parser.add_argument(
+        "-out",
+        "--output",
+        dest="output_folder",
+        help="the folder path for saving files",
+    )
+    parser.add_argument("-exe", "--exefile", dest="exe_file", help="the exec file")
 
     args = parser.parse_args()
 
     if args.info_file is None:
-        sys.exit('Error: no info file (sample information file)')
+        sys.exit("Error: no info file (sample information file)")
     if args.output_folder is None:
-        sys.exit('Error: no input folder path provided!')
+        sys.exit("Error: no input folder path provided!")
     if args.exe_file is None:
-        sys.exit('Error: no exec file provided!')
+        sys.exit("Error: no exec file provided!")
 
     return args
+
 
 # sample_info = pd.read_csv("sample_info_final.csv", sep=',')
 def thermorawfileparser(exe_file, info_file, output_folder):
@@ -36,12 +46,14 @@ def thermorawfileparser(exe_file, info_file, output_folder):
     :info_file:     sample information file contains raw files, samples, mapped searching databases
     :output_folder: input/output folder path for raw/peak list data
     """
-    sample_info = pd.read_csv(info_file, sep=',')
-    sample_info = sample_info[['Sample','Raw file','Raw file URLs']].drop_duplicates()
-    RawURLs  = sample_info['Raw file URLs'].dropna().to_list()
+    sample_info = pd.read_csv(info_file, sep=",")
+    sample_info = sample_info[["Sample", "Raw file", "Raw file URLs"]].drop_duplicates()
+    RawURLs = sample_info["Raw file URLs"].dropna().to_list()
 
     if len(RawURLs) > 0:
-        samples = {k: g["Raw file URLs"].tolist() for k,g in sample_info.groupby("Sample")}
+        samples = {
+            k: g["Raw file URLs"].tolist() for k, g in sample_info.groupby("Sample")
+        }
         for sample in samples.keys():
             # generate the folder if it is not there
             folder = os.path.join(output_folder, sample)
@@ -56,7 +68,7 @@ def thermorawfileparser(exe_file, info_file, output_folder):
             subprocess.run(commandline, shell=True)
 
     else:
-        samples = {k: g["Raw file"].tolist() for k,g in sample_info.groupby("Sample")}
+        samples = {k: g["Raw file"].tolist() for k, g in sample_info.groupby("Sample")}
         for sample in samples.keys():
             # generate the folder if it is not there
             folder = os.path.join(output_folder, sample)

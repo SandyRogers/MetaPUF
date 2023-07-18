@@ -34,7 +34,7 @@ def generate_clusters(  # noqa: C901
     :param p_dir: directory path for cluster_report
     :param sample_assembly_info: dictionary containing sample assembly information
     """
-    min_db_size=(max(prot_dict.items(), key=lambda x: x[1]))[1]
+    min_db_size = (max(prot_dict.items(), key=lambda x: x[1]))[1]
     if db_size < min_db_size:
         logging.info("db_size entered is less than the size of a single assembly")
         sys.exit(1)
@@ -42,7 +42,7 @@ def generate_clusters(  # noqa: C901
         col_name = df1.columns.to_list()
         group_no = 1
         max_clusters = len(prot_dict)
-        min_db_size=(min(prot_dict.items(), key=lambda x: x[1]))[1]
+        min_db_size = (min(prot_dict.items(), key=lambda x: x[1]))[1]
         assemblies = col_name
         cluster_assemblies = {}
         cluster_elements = {}

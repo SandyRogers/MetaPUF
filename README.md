@@ -6,7 +6,7 @@ ____________________________________
 # Installation
 ____________________________________
 
-Please follow the instructions from the [tutorial](https://metapuf-tutorial.readthedocs.io/en/latest/installation.html#installation) 
+Please follow the instructions from the [tutorial](https://metapuf-tutorial.readthedocs.io/en/latest/installation.html#installation)
 
 The packages and their versions:
 - Python3
@@ -22,7 +22,6 @@ Please find more detailed documentation from [MetaPUF](https://metapuf-tutorial.
 ## (Linux) Requirements
 [Mono](https://www.mono-project.com/download/stable/#download-lin) (install mono-complete if you encounter "assembly not found" errors).
 
-
 # Example Usage
 ____________________________________
 
@@ -32,10 +31,10 @@ ____________________________________
 
 - The user can update the config.proteomics.yaml file in the  config.proteomics.yaml file in the config folder with the output results folder and the name of the PRIDE ID.
 
-- Since the pipeline is a long-running task, it is recommended to use some terminal multiplexer such as `screen` or other job control tools to run the pipeline in the background, and the memory for running the pipeline should be big enough as well. 
+- Since the pipeline is a long-running task, it is recommended to use some terminal multiplexer such as `screen` or other job control tools to run the pipeline in the background, and the memory for running the pipeline should be big enough as well.
 
 ## Tips for running Snakemake
-- You can run a dry-run to check for any syntax errors 
+- You can run a dry-run to check for any syntax errors
 ```
  $ Snakemake  -np
 ```
@@ -48,6 +47,18 @@ ____________________________________
 
 - Tips: IF the pipeline got collapsed during running, you can always try to run a dry-run `Snakemake  -np` first to check how many rules have been successful executed, and if you are sure that some files are generated correctly, you can use `snakemake --cleanup-metadata <filenames>` to skip these files to be re-generated. However, sometimes `snakemake --cleanup-metadata <filenames>` doesn't work, you can also try to manually delete the `.snakemake/incomplete` directory.
 
+# Development installation
+```shell
+git clone https://github.com/PRIDE-reanalysis/MetaPUF.git
+cd MetaPUF
+conda activate snakemake  # or another conda/venv if you prefer
+pip install ".[dev,docs]"
+pre-commit install
+```
+
+This installs the development requirements, and installs the pre-commit hooks which format the code correctly while commiting changes.
+You can also manually format the code using `black .`.
+It also installs `mkdocs`, which is used to build the documentation.
 
 # Core contributors and collaborators
 
