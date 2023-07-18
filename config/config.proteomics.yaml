@@ -1,3 +1,4 @@
+---
 raws:
     Metadata: "sample_info.csv"
 
@@ -10,10 +11,10 @@ parameters:
     ThermoFold: "input/Raw"
     first_name: "your first name"
     last_name: "your last name"
-    email: "user_name@xx"
+    email: "you@example.org"
     address: "your address"
     org_name: "the name of your organisation"
-    org_email: "user_name@xx"
+    org_email: "us@example.org"
     org_address: "the address of your organisation "
 outputdir: "./"
 workdir: "./"
