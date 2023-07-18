@@ -5,6 +5,13 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-
 # pytest
 .pytest_cache
+
+# Build
+build
+*.egg-info
+
+# Pipeline run
+.snakemake/**
+logs
