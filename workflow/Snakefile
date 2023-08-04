@@ -1,0 +1,84 @@
+import os
+
+import pandas as pd
+
+##################################################
+# SHELL
+##################################################
+# default executable for snakemake
+shell.executable("bash")
+
+##################################################
+# PATHS
+##################################################
+# default configuration file
+configfile: "config/config.proteomics.yaml"
+
+# parameters
+STUDY = config["parameters"]["study"]
+PRIDE_ID = config["parameters"]["pride_id"]
+
+SAMPLEINFO_FILE    = config["sample_metadata"]
+
+
+##################################################
+# WORKDIR
+##################################################
+workdir:
+    config['workdir']
+
+#input files
+sample_info     = pd.read_csv(SAMPLEINFO_FILE, sep=',')
+Assemblies      = sample_info['Assembly'].drop_duplicates().to_list()
+Samples         = sample_info['Sample'].drop_duplicates().to_list()
+sample_raw      = sample_info[['Sample','Raw file']].drop_duplicates()
+sample_raw[['filename','extension']] = sample_raw['Raw file'].str.split('.',expand=True)
+RawFileNames    = (sample_raw['Sample']+'/'+sample_raw['filename']).to_list()
+
+config['samples'] = Samples
+config['raw_file_names'] = RawFileNames
+
+# output files
+PROCESSED_REPORTS_DIR = os.path.join(config["outputdir"], "Processed_Peptide_Reports")
+GFF_FILE = expand("{fname}/results/{aname}_expressed_proteins.csv", fname=PROCESSED_REPORTS_DIR, aname=Assemblies)
+
+container: "continuumio/miniconda3:23.5.2-0"
+
+##################################################
+# RULES
+##################################################
+rule ALL:
+    input:
+        gff_files=GFF_FILE
+
+#########################
+# Generate protein search database
+#########################
+include: "rules/generate_db.smk"
+
+#########################
+# ThermoRawFileParser
+#########################
+# https://github.com/compomics/ThermoRawFileParser
+include: "rules/raw_file_parse.smk"
+
+#########################
+# SearchGUI
+#########################
+include: "rules/searchgui.smk"
+
+#########################
+# PeptideShaker
+#########################
+# http://compomics.github.io/projects/peptide-shaker
+include: "rules/peptide_shaker.smk"
+
+########################
+# Generate post processing reports
+########################
+include: "rules/post_processing.smk"
+
+#########################
+# Gff format file
+#########################
+include: "rules/gff_generation.smk"

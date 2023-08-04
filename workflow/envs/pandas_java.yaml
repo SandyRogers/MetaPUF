@@ -1,0 +1,9 @@
+---
+name: pandas
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - pandas=2.0.3
+  - openjdk=11.0.1
+  - bioconda::snakemake

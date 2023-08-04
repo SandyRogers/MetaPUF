@@ -1,0 +1,14 @@
+---
+name: metagenomics_db
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - python=3.10
+  - biopython
+  - pandas
+  - pip
+  - pip:
+      - mg-toolkit==0.10.1
+      - sourmash==4.4.2

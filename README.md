@@ -6,6 +6,18 @@ ____________________________________
 # Installation
 ____________________________________
 
+TODO:
+Test-data:
+There is a small test-data set, using a few assemblies from MGnify and two RAW files from PRIDE.
+To fetch the (~GB size) RAW files:
+./test-data/pride/fetch-pride-test-data.sh
+
+Then:
+Snakemake --cores 4 --use-conda
+
+
+-----------
+
 Please follow the instructions from the [tutorial](https://metapuf-tutorial.readthedocs.io/en/latest/installation.html#installation)
 
 The packages and their versions:

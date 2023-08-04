@@ -1,36 +1,31 @@
 ---
-raws:
-    Metadata: "sample_info.csv"
+sample_metadata: "config/sample_info.csv"
 
 parameters:
-    Study: "ERP124921"
-    # Input_dir: "./"
-    Pride_id: "PXD005780"
-    MGnify_version: "5.0"
-    Db_size: 1073741824
-    ThermoFold: "input/Raw"
-    first_name: "your first name"
-    last_name: "your last name"
-    email: "you@example.org"
-    address: "your address"
-    org_name: "the name of your organisation"
-    org_email: "us@example.org"
-    org_address: "the address of your organisation "
-outputdir: "./"
+    study: ""
+    input_dir: "test-data/mgnify/ERP124921/5.0/sequence_data"
+    raw_dir: "test-data/pride"
+    pride_id: "PXD005780"
+    mgnify_version: "5.0"
+    db_size: 1073741824
 workdir: "./"
 tmpdir: "./tmp"
-output:
-    searchgui_folder: "searchgui"
-    peptideshaker_folder: "peptideshaker"
+outputdir: "test-run"
+
 thermo:
     url: "https://github.com/compomics/ThermoRawFileParser/releases/download/{version}/ThermoRawFileParser.zip"
     exe: "ThermoRawFileParser.exe"
     version: "v1.2.3"
+    tooldir: "workflow/tools/thermorawfileparser"
 searchgui:
     url: "http://genesis.ugent.be/maven2/eu/isas/searchgui/SearchGUI/{version}/SearchGUI-{version}-mac_and_linux.tar.gz"
     jar: "SearchGUI-{version}/SearchGUI-{version}.jar"
     version: "3.3.20"
-    par:
+    tooldir: "workflow/tools/searchgui"
+    resources:
+        crap_db: "workflow/resources/crap_db.fa"
+        human_db: "workflow/resources/human_db.fa"
+    params:
         prec_tol: 10
         prec_ppm: 1
         frag_tol: 0.02
@@ -64,3 +59,4 @@ peptideshaker:
     url: "http://genesis.ugent.be/maven2/eu/isas/peptideshaker/PeptideShaker/{version}/PeptideShaker-{version}.zip"
     jar: "PeptideShaker-{version}/PeptideShaker-{version}.jar"
     version: "1.16.45"
+    tooldir: "workflow/tools/peptideshaker"

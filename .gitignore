@@ -14,4 +14,9 @@ build
 
 # Pipeline run
 .snakemake/**
-logs
+logs/*
+workflow/tools/*
+assemblies
+
+# Test data
+*.raw
