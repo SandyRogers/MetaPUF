@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 import pandas as pd
 
@@ -23,7 +24,7 @@ rule generate_db:
         cluster_rpt=CLUSTER_REPORT
     params:
         study=STUDY,
-        input_dir=config["parameters"]["input_dir"],
+        input_dir=Path(config["parameters"]["input_dir"]).resolve(),
         ver=config["parameters"]["mgnify_version"],
         output_dir=OUTPUTDIR,
         db_size=config["parameters"]["db_size"]

@@ -4,13 +4,13 @@ sample_metadata: "config/sample_info.csv"
 parameters:
     study: ""
     input_dir: "test-data/mgnify/ERP124921/5.0/sequence_data"
-    raw_dir: "test-data/pride"
+    raw_dir: "./test-data/pride"
     pride_id: "PXD005780"
     mgnify_version: "5.0"
     db_size: 1073741824
 workdir: "./"
 tmpdir: "./tmp"
-outputdir: "test-run"
+outputdir: "../test-run"
 
 thermo:
     url: "https://github.com/compomics/ThermoRawFileParser/releases/download/{version}/ThermoRawFileParser.zip"

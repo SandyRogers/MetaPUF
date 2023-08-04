@@ -34,7 +34,7 @@ rule thermorawfileparser:
         exe=thermorawfileparser_path
     output:
         mgf=THERMOMGF,
-        folder=THERMOFOLD
+        folder=directory(THERMOFOLD)
     params:
         folder=THERMOFOLD,
         raw=config["parameters"]["raw_dir"]
