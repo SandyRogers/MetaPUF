@@ -4,58 +4,54 @@ ____________________________________
 ####  An approach to integrate metagenomics, metatranscriptomics and metaproteomics data found in public resources such as MGnify (for metagenomics/metatranscriptomics) and the PRIDE database (for metaproteomics). When these omics techniques are applied to the same sample, their integration offers new opportunities to understand the structure (metagenome) and functional expression (metatranscriptome and metaproteome) of the microbiome.
 
 # Installation
-____________________________________
+You need a working [installation](https://snakemake.readthedocs.io/en/stable/getting_started/installation.html) of [Snakemake](https://snakemake.readthedocs.io/en/stable/).
+Then:
+```shell
+git clone <this-repo>
+```
 
-TODO:
-Test-data:
+The pipeline uses conda environments to manage dependencies, which are handled automatically if you run snakemake with the `--use-conda` flag.
+
+It also relies on some tools ([`ThermoRawFileParser`](https://github.com/compomics/ThermoRawFileParser), [`SearchGui`](http://compomics.github.io/projects/searchgui) and [`PeptideShaker`](http://compomics.github.io/projects/peptide-shaker))
+which do not have conda packages or docker images available for the versions we used.
+These tools are downloaded on-the-fly by snakemake, so you do not need to install them separately.
+
+# Example usage (test data-set)
 There is a small test-data set, using a few assemblies from MGnify and two RAW files from PRIDE.
-To fetch the (~GB size) RAW files:
+To fetch the (~GB size) RAW files, which are too big for this git repository:
+```shell
 ./test-data/pride/fetch-pride-test-data.sh
+```
+This downloads two RAW files into `test-data/pride/`.
 
 Then:
-Snakemake --cores 4 --use-conda
+```shell
+conda activate snakemake # (assuming you installed snakemake with conda, into an env called snakemake)
+cd MetaPUF
+snakemake --cores 4 --use-conda
+```
+This will run the pipeline on the small dataset, and put results into `../test-run`.
 
+# Real usage (configuration)
+Edit the `config/config.proteomics.yaml` and `sample_info.csv` files to point the pipeline at real data.
+`sample_info.csv` is the mapping of MGnify to PRIDE datasets, and in the config `parameters.input_dir` and `parameters.raw_dir` refer to the MGnify and PRIDE data folders respectively.
 
------------
-
-Please follow the instructions from the [tutorial](https://metapuf-tutorial.readthedocs.io/en/latest/installation.html#installation)
-
-The packages and their versions:
-- Python3
-- Snakemake==7.3.8
-- biopython==1.79
-- mg-toolkit==0.10.1
-- pandas==1.4.2
-- sourmash==4.4.2
-
-The versions of the tools ( [`ThermoRawFileParser`](https://github.com/compomics/ThermoRawFileParser), `SearchGui` and `PeptideShaker` ) that we used in our pipeline are not updated to the latest ones, you can still use the latest version of ThermoRawFileParser, but you will need to download other two tools from these links: [PeptideShaker 1.16.45](https://genesis.ugent.be/maven2/eu/isas/peptideshaker/PeptideShaker/) and [SearchGui 3.3.20](https://genesis.ugent.be/maven2/eu/isas/searchgui/SearchGUI/), after downloading, please unzip them and move the folders under the path of `workflow/bin`.
-Please find more detailed documentation from [MetaPUF](https://metapuf-tutorial.readthedocs.io/en/latest/index.html)
-
-## (Linux) Requirements
-[Mono](https://www.mono-project.com/download/stable/#download-lin) (install mono-complete if you encounter "assembly not found" errors).
-
-# Example Usage
-____________________________________
-
-- The example folder has a sample of post processed reports metaproteomics study (marine?) and sample_info.txt that contains all the information for generating metagenomics assemblies and build the protein sequence databases.
-
-- The user can update the size of the protein serach database in the config.proteomics.yaml file in the config folder or else it takes the default size of 1GB.
-
-- The user can update the config.proteomics.yaml file in the  config.proteomics.yaml file in the config folder with the output results folder and the name of the PRIDE ID.
-
-- Since the pipeline is a long-running task, it is recommended to use some terminal multiplexer such as `screen` or other job control tools to run the pipeline in the background, and the memory for running the pipeline should be big enough as well.
 
 ## Tips for running Snakemake
 - You can run a dry-run to check for any syntax errors
 ```
- $ Snakemake  -np
+ Snakemake  -np
 ```
 
 - To run the workflow
 ```
- $ Snakemake --cores 4
+ Snakemake --cores 4 --use-conda
 ```
 
+- Using LSF on an HPC cluster:
+```shell
+bsub -n 4 -R "rusage[mem=4096]" -J metapuf -u $USER -o job.log -e job.err snakemake --cores 4 --use-conda
+```
 
 - Tips: IF the pipeline got collapsed during running, you can always try to run a dry-run `Snakemake  -np` first to check how many rules have been successful executed, and if you are sure that some files are generated correctly, you can use `snakemake --cleanup-metadata <filenames>` to skip these files to be re-generated. However, sometimes `snakemake --cleanup-metadata <filenames>` doesn't work, you can also try to manually delete the `.snakemake/incomplete` directory.
 
@@ -71,6 +67,10 @@ pre-commit install
 This installs the development requirements, and installs the pre-commit hooks which format the code correctly while commiting changes.
 You can also manually format the code using `black .`.
 It also installs `mkdocs`, which is used to build the documentation.
+
+## Editing docs
+Change the markdown files in the `docs/` folder.
+Then `mkdocs serve` to view the documentation site locally.
 
 # Core contributors and collaborators
 

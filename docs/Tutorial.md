@@ -1,57 +1,50 @@
-# **Tutorials**
+# Tutorials
 
 Here below you can find tutorials on how to use some of the MetaPUF pipelines and standalones. This gives you a flavor of what can be achieved using MetaPUF.
 
-## **Installation**
-
-### From Bioconda
-
-The pipelines in MetaPUF rely on third party software such as Snakemake or mg-toolkit that are not python libraries. We therefore recommend to use conda that provides pre-compiled software for you.
+## Installation
 
 #### Install conda executable
 
 We recommend to install Miniconda Python3 distribution from [Download](https://conda.io/en/latest/miniconda.html).
 
-#### Add bioconda channels
+#### Install Snakemake
 
-When you want to install a ny package, conda looks on the official Anaconda website (channel). However many channels are present, we will use bioconda channel. To use this type the command:
+We recommend to [install Snakemake using conda](https://snakemake.readthedocs.io/en/stable/getting_started/installation.html), if you don't already have it.
 
-```
-conda config --add channels defaults
-conda config --add channels bioconda
-```
-It is important to have the channels in the right order. You can check the [order](https://bioconda.github.io/) with the command
+This tutorial assumes you install Snakemake into a conda env called `snakemake`.
 
-```
-conda config --get channels
-```
+#### From GitHub source code
 
-#### Create a conda environment
+You can install MetaPUF locally from GitHub
 
-Once miniconda is installed and the channels set, you can create a new environment for MetaPUF using the command
-
-```
-conda env --name metapuf create --f metapuf_env.yml
-```
-
-You must active the metapuf environment whenever you work with this workflow.
-
-```
-conda activate metapuf
-```
-
-### From Github source code
-
-You can also install metapuf locally from Github
-
-```
-conda env --name metapuf create --f metapuf_env.yml
-conda activate metapuf
+```shell
+conda activate snakemake
 git clone https://github.com/PRIDE-reanalysis/MetaPUF.git
 cd MetaPUF
 ```
 
-## **Inputs**
+The dependencies are handled by Snakemake's creation of conda envs, and by some Snakemake rules that download non-conda dependencies.
+
+## Running a test project
+
+A small test dataset is available consisting of a couple of MGnify analyses and a couple of PRIDE raw files.
+The PRIDE raw files are too big for GitHub, so they can be fetched using a script:
+```shell
+./test-data/pride/fetch-pride-test-data.sh
+```
+This downloads two RAW files into `test-data/pride/`, which will use around 2GB disk space.
+
+The config file in `config/config.proteomics.yaml` and the sample mapping in `config/sample_info.csv` are already written to work with this dataset.
+
+To run the dataset:
+
+```shell
+snakemake --cores 4 --use-conda
+```
+Outputs will be in `../test-run`, logs will be in `logs/`.
+
+## Inputs
 
 The workflow requires the following inputs in the config.yaml file:
 
@@ -67,7 +60,7 @@ You can also input your own metagenomics and/or metatranscriptomics assemblies a
 
 * `Pride_id: PRIDE dataset accession For example (PXD005780)`
 
-Depending on the network, it is better to downloaded the dataset (raw files) beforehand and put them in the correct folder, each sample should have a sub-folder for the Raw files. You can also use the pipeline to download the files for you, but it may take time; also, if the connection failes, all the files will need to be re-downloaded again.
+Depending on the network, it is better to download the dataset (raw files) beforehand and put them in the correct folder, each sample should have a sub-folder for the Raw files. You can also use the pipeline to download the files for you, but it may take time; also, if the connection failes, all the files will need to be re-downloaded again.
 
 ** Example of folder stuctrue: (PXD005780 for example)
 Under the root path of the MetaPUF project, create a folder named `input/Raw`, under this path, you need to create sub-folders for each sample: `S06`, `S07`, ... etc. And put the raw files into the correlated sub-folder. If there are multiple raw files for one sample, please put all those raw files into the same sub-folder which represents for one sample.
