@@ -81,7 +81,7 @@ Sample  | PRIDE Accession  | Raw file  | Raw file URLs  | Sample Accession  | As
 
 This workflow looks for this file in the config directory. You don't need to provide the `PRIDE Accession` number and `Raw file URLs` if you have the data locally, and just leave the column as blank, however the header is still needed.
 
-## **Quick start**
+## Quick start
 
 Snakemake dry run command
 
@@ -95,7 +95,7 @@ To run the workflow with Snakemake
 Snakemake --cores 4
 ```
 
-## **Outputs**
+## Outputs
 
 The outputs include the following files
 * `Protein sequence database`
